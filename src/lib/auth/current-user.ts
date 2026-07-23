@@ -12,6 +12,7 @@ import { SESSION_COOKIE, verifySessionToken } from "./session";
 export type SafeUser = Omit<User, "passwordHash">;
 
 function toSafeUser(user: User): SafeUser {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { passwordHash: _passwordHash, ...safe } = user;
   return safe;
 }

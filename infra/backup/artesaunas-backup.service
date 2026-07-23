@@ -1,0 +1,7 @@
+[Unit]
+Description=Backup do banco da Arte Saunas para o OneDrive
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/artesaunas/infra/backup/backup.sh
