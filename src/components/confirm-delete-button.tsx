@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Trash2Icon } from "lucide-react";
 
@@ -27,15 +27,17 @@ export function ConfirmDeleteButton({
   trigger = true,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
+  onSuccess,
 }: {
   id: string;
   action: (id: string) => Promise<DeleteActionResult>;
   title: string;
   description: string;
   triggerLabel?: string;
-  trigger?: boolean;
+  trigger?: boolean | ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
@@ -51,12 +53,13 @@ export function ConfirmDeleteButton({
       }
       toast.success("Excluído com sucesso.");
       setOpen(false);
+      onSuccess?.();
     });
   }
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      {trigger && (
+      {trigger === true && (
         <AlertDialogTrigger asChild>
           <button
             type="button"
@@ -66,6 +69,9 @@ export function ConfirmDeleteButton({
             {triggerLabel}
           </button>
         </AlertDialogTrigger>
+      )}
+      {trigger && trigger !== true && (
+        <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       )}
       <AlertDialogContent>
         <AlertDialogHeader>
