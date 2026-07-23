@@ -8,6 +8,13 @@
       "when": 1784823337884,
       "tag": "0000_unusual_serpent_society",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1784824968199,
+      "tag": "0001_lowly_jazinda",
+      "breakpoints": true
     }
   ]
 }

@@ -89,29 +89,6 @@ export const budgetItems = sqliteTable(
   (table) => [index("budget_items_budget_idx").on(table.budgetId)]
 );
 
-export const calendarEvents = sqliteTable(
-  "calendar_events",
-  {
-    id: text("id").primaryKey(),
-    googleEventId: text("google_event_id").notNull().unique(),
-    title: text("title").notNull(),
-    description: text("description"),
-    startAt: integer("start_at", { mode: "timestamp_ms" }).notNull(),
-    endAt: integer("end_at", { mode: "timestamp_ms" }).notNull(),
-    contactId: text("contact_id").references(() => contacts.id, {
-      onDelete: "set null",
-    }),
-    budgetId: text("budget_id").references(() => budgets.id, {
-      onDelete: "set null",
-    }),
-    createdById: text("created_by_id").references(() => users.id, {
-      onDelete: "set null",
-    }),
-    ...timestamps,
-  },
-  (table) => [index("calendar_events_start_idx").on(table.startAt)]
-);
-
 // Single-row-per-key store for small pieces of app config (Google OAuth
 // tokens, connected calendar id, etc.) that don't warrant their own table.
 export const appSettings = sqliteTable("app_settings", {
@@ -130,5 +107,3 @@ export type Budget = typeof budgets.$inferSelect;
 export type NewBudget = typeof budgets.$inferInsert;
 export type BudgetItem = typeof budgetItems.$inferSelect;
 export type NewBudgetItem = typeof budgetItems.$inferInsert;
-export type CalendarEvent = typeof calendarEvents.$inferSelect;
-export type NewCalendarEvent = typeof calendarEvents.$inferInsert;
