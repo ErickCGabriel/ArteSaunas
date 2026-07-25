@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { or, like, desc } from "drizzle-orm";
 import { PlusIcon, SearchIcon } from "lucide-react";
 
@@ -99,7 +100,12 @@ export default async function ContatosPage({
                 {rows.map((contact) => (
                   <TableRow key={contact.id}>
                     <TableCell className="font-medium">
-                      {contact.name}
+                      <Link
+                        href={`/contatos/${contact.id}`}
+                        className="hover:text-primary hover:underline"
+                      >
+                        {contact.name}
+                      </Link>
                     </TableCell>
                     <TableCell>{contact.phone ?? "—"}</TableCell>
                     <TableCell>{contact.email ?? "—"}</TableCell>

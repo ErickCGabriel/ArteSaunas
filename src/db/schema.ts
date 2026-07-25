@@ -89,6 +89,30 @@ export const budgetItems = sqliteTable(
   (table) => [index("budget_items_budget_idx").on(table.budgetId)]
 );
 
+export const contactFiles = sqliteTable(
+  "contact_files",
+  {
+    id: text("id").primaryKey(),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    // Name used on disk (data/uploads/<contactId>/<storedName>) — random, to
+    // avoid path traversal / collisions. The original name is kept separately
+    // for display and for the download filename.
+    storedName: text("stored_name").notNull(),
+    originalName: text("original_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    uploadedById: text("uploaded_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch('subsec') * 1000)`),
+  },
+  (table) => [index("contact_files_contact_idx").on(table.contactId)]
+);
+
 // Single-row-per-key store for small pieces of app config (Google OAuth
 // tokens, connected calendar id, etc.) that don't warrant their own table.
 export const appSettings = sqliteTable("app_settings", {
@@ -107,3 +131,5 @@ export type Budget = typeof budgets.$inferSelect;
 export type NewBudget = typeof budgets.$inferInsert;
 export type BudgetItem = typeof budgetItems.$inferSelect;
 export type NewBudgetItem = typeof budgetItems.$inferInsert;
+export type ContactFile = typeof contactFiles.$inferSelect;
+export type NewContactFile = typeof contactFiles.$inferInsert;

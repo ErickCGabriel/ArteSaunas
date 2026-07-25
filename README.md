@@ -13,6 +13,8 @@ depender de nenhum serviço de nuvem para os dados do negócio.
 - **PDF** de orçamento via `@react-pdf/renderer`
 - Integração **Google Calendar** via OAuth2 (a conta conectada é a fonte de
   verdade dos eventos — o app só cria/edita/apaga, não faz sync de dois lados)
+- **Arquivos por contato** (plantas, fotos, documentos que o cliente manda),
+  guardados em `data/uploads/` no próprio servidor, não em nuvem de terceiros
 
 ## Rodando localmente
 
@@ -118,6 +120,9 @@ de cada peça. Passo a passo:
    ```bash
    systemctl enable --now artesaunas-backup.timer
    ```
+   O backup cobre tanto o banco (snapshot diário, mantém os últimos 14 dias)
+   quanto os arquivos enviados por clientes em `data/uploads/` (cópia
+   incremental, sem apagar nada no remoto).
 
 5. **Deploys seguintes** — depois que o setup inicial estiver feito, para
    subir código novo:
