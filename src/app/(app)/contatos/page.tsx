@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { or, like, desc } from "drizzle-orm";
+import { or, like, asc, desc } from "drizzle-orm";
 import { PlusIcon, SearchIcon } from "lucide-react";
 
 import { db } from "@/db";
@@ -21,16 +21,23 @@ import {
 } from "@/components/ui/table";
 import { ContactFormDialog } from "./contact-form-dialog";
 import { ContactRowMenu } from "./contact-row-menu";
+import { SortSelect } from "./sort-select";
 
 export const metadata: Metadata = { title: "Contatos — Arte Saunas" };
+
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  dateStyle: "short",
+  timeStyle: "short",
+});
 
 export default async function ContatosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, sort } = await searchParams;
   const term = q?.trim();
+  const sortBy = sort === "name" ? "name" : "updated";
 
   const rows = await db
     .select()
@@ -44,7 +51,7 @@ export default async function ContatosPage({
           )
         : undefined
     )
-    .orderBy(desc(contacts.createdAt));
+    .orderBy(sortBy === "name" ? asc(contacts.name) : desc(contacts.updatedAt));
 
   return (
     <div className="flex flex-col gap-6">
@@ -65,8 +72,8 @@ export default async function ContatosPage({
         />
       </div>
 
-      <form className="flex max-w-sm items-center gap-2">
-        <div className="relative w-full">
+      <form className="flex flex-wrap items-center gap-2">
+        <div className="relative w-full max-w-sm">
           <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             name="q"
@@ -75,6 +82,7 @@ export default async function ContatosPage({
             className="pl-8"
           />
         </div>
+        <SortSelect defaultValue={sortBy} />
       </form>
 
       <Card>
@@ -93,6 +101,7 @@ export default async function ContatosPage({
                   <TableHead>Telefone</TableHead>
                   <TableHead>E-mail</TableHead>
                   <TableHead>Endereço</TableHead>
+                  <TableHead>Atualizado em</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -111,6 +120,9 @@ export default async function ContatosPage({
                     <TableCell>{contact.email ?? "—"}</TableCell>
                     <TableCell className="max-w-64 truncate">
                       {contact.address ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {dateFormatter.format(contact.updatedAt)}
                     </TableCell>
                     <TableCell>
                       <ContactRowMenu contact={contact} />

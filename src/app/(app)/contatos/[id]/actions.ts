@@ -6,9 +6,18 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
-import { contactFiles } from "@/db/schema";
+import { contactFiles, contacts } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
 import { getContactFilePath } from "@/lib/storage";
+
+// Uploading/removing a file counts as "editing" the contact, so it shows up
+// when sorting the Contatos list by last-updated.
+function touchContact(contactId: string) {
+  return db
+    .update(contacts)
+    .set({ updatedAt: new Date() })
+    .where(eq(contacts.id, contactId));
+}
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25MB
 
@@ -46,8 +55,10 @@ export async function uploadContactFile(
     sizeBytes: file.size,
     uploadedById: user.id,
   });
+  await touchContact(contactId);
 
   revalidatePath(`/contatos/${contactId}`);
+  revalidatePath("/contatos");
   return {};
 }
 
@@ -66,7 +77,9 @@ export async function deleteContactFile(
 
   await db.delete(contactFiles).where(eq(contactFiles.id, fileId));
   await fs.unlink(getContactFilePath(record.contactId, record.storedName)).catch(() => {});
+  await touchContact(record.contactId);
 
   revalidatePath(`/contatos/${record.contactId}`);
+  revalidatePath("/contatos");
   return {};
 }
