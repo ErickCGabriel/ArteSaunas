@@ -18,7 +18,7 @@ export async function GET(
 
   const { id } = await params;
 
-  const budget = await db.select().from(budgets).where(eq(budgets.id, id)).get();
+  const budget = await db.select().from(budgets).where(eq(budgets.id, id)).then((rows) => rows[0]);
   if (!budget) {
     return new NextResponse("Orçamento não encontrado.", { status: 404 });
   }
@@ -29,7 +29,7 @@ export async function GET(
       .from(budgetItems)
       .where(eq(budgetItems.budgetId, id))
       .orderBy(asc(budgetItems.position)),
-    db.select().from(contacts).where(eq(contacts.id, budget.contactId)).get(),
+    db.select().from(contacts).where(eq(contacts.id, budget.contactId)).then((rows) => rows[0]),
   ]);
 
   if (!contact) {

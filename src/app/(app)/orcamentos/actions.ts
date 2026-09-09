@@ -58,7 +58,7 @@ async function nextBudgetNumber(): Promise<string> {
     .where(like(budgets.number, `${prefix}%`))
     .orderBy(desc(budgets.number))
     .limit(1)
-    .get();
+    .then((rows) => rows[0]);
 
   const nextSeq = last
     ? Number.parseInt(last.number.slice(prefix.length), 10) + 1
@@ -81,31 +81,27 @@ export async function createBudget(
   const number = await nextBudgetNumber();
   const { items, ...data } = parsed.data;
 
-  db.transaction((tx) => {
-    tx.insert(budgets)
-      .values({
-        id,
-        number,
-        title: data.title,
-        contactId: data.contactId,
-        notes: data.notes || null,
-        validUntil: data.validUntil ? new Date(data.validUntil) : null,
-        createdById: user.id,
-      })
-      .run();
+  await db.transaction(async (tx) => {
+    await tx.insert(budgets).values({
+      id,
+      number,
+      title: data.title,
+      contactId: data.contactId,
+      notes: data.notes || null,
+      validUntil: data.validUntil ? new Date(data.validUntil) : null,
+      createdById: user.id,
+    });
 
-    tx.insert(budgetItems)
-      .values(
-        items.map((item, index) => ({
-          id: nanoid(),
-          budgetId: id,
-          description: item.description,
-          quantity: item.quantity,
-          unitPriceCents: item.unitPriceCents,
-          position: index,
-        }))
-      )
-      .run();
+    await tx.insert(budgetItems).values(
+      items.map((item, index) => ({
+        id: nanoid(),
+        budgetId: id,
+        description: item.description,
+        quantity: item.quantity,
+        unitPriceCents: item.unitPriceCents,
+        position: index,
+      }))
+    );
   });
 
   revalidatePath("/orcamentos");
@@ -125,8 +121,9 @@ export async function updateBudget(
 
   const { items, ...data } = parsed.data;
 
-  db.transaction((tx) => {
-    tx.update(budgets)
+  await db.transaction(async (tx) => {
+    await tx
+      .update(budgets)
       .set({
         title: data.title,
         contactId: data.contactId,
@@ -134,23 +131,20 @@ export async function updateBudget(
         validUntil: data.validUntil ? new Date(data.validUntil) : null,
         updatedAt: new Date(),
       })
-      .where(eq(budgets.id, id))
-      .run();
+      .where(eq(budgets.id, id));
 
-    tx.delete(budgetItems).where(eq(budgetItems.budgetId, id)).run();
+    await tx.delete(budgetItems).where(eq(budgetItems.budgetId, id));
 
-    tx.insert(budgetItems)
-      .values(
-        items.map((item, index) => ({
-          id: nanoid(),
-          budgetId: id,
-          description: item.description,
-          quantity: item.quantity,
-          unitPriceCents: item.unitPriceCents,
-          position: index,
-        }))
-      )
-      .run();
+    await tx.insert(budgetItems).values(
+      items.map((item, index) => ({
+        id: nanoid(),
+        budgetId: id,
+        description: item.description,
+        quantity: item.quantity,
+        unitPriceCents: item.unitPriceCents,
+        position: index,
+      }))
+    );
   });
 
   revalidatePath("/orcamentos");

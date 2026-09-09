@@ -59,7 +59,7 @@ export async function createUser(
     .select({ id: users.id })
     .from(users)
     .where(eq(users.email, parsed.data.email))
-    .get();
+    .then((rows) => rows[0]);
 
   if (existing) {
     return { error: "Já existe um usuário com esse e-mail." };
@@ -101,7 +101,7 @@ export async function updateUser(
   }
 
   if (parsed.data.role !== "admin") {
-    const target = await db.select().from(users).where(eq(users.id, id)).get();
+    const target = await db.select().from(users).where(eq(users.id, id)).then((rows) => rows[0]);
     if (target?.role === "admin" && (await countActiveAdmins(id)) === 0) {
       return {
         error: "Precisa existir pelo menos um administrador ativo.",
@@ -127,7 +127,7 @@ export async function toggleUserActive(
     return { error: "Você não pode desativar sua própria conta." };
   }
 
-  const target = await db.select().from(users).where(eq(users.id, id)).get();
+  const target = await db.select().from(users).where(eq(users.id, id)).then((rows) => rows[0]);
   if (!target) return { error: "Usuário não encontrado." };
 
   if (target.active && target.role === "admin" && (await countActiveAdmins(id)) === 0) {
@@ -163,7 +163,7 @@ export async function resetUserPassword(
     return { error: parsed.error.issues[0]?.message ?? "Senha inválida." };
   }
 
-  const target = await db.select().from(users).where(eq(users.id, id)).get();
+  const target = await db.select().from(users).where(eq(users.id, id)).then((rows) => rows[0]);
   if (!target) return { error: "Usuário não encontrado." };
 
   const passwordHash = await hashPassword(parsed.data);
@@ -188,7 +188,7 @@ export async function deleteUser(id: string): Promise<{ error?: string }> {
     return { error: "Você não pode excluir sua própria conta." };
   }
 
-  const target = await db.select().from(users).where(eq(users.id, id)).get();
+  const target = await db.select().from(users).where(eq(users.id, id)).then((rows) => rows[0]);
   if (!target) return { error: "Usuário não encontrado." };
 
   if (target.role === "admin" && (await countActiveAdmins(id)) === 0 && target.active) {

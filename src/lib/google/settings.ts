@@ -13,7 +13,7 @@ async function getSetting(key: string): Promise<string | null> {
     .select()
     .from(appSettings)
     .where(eq(appSettings.key, key))
-    .get();
+    .then((rows) => rows[0]);
   return row ? (JSON.parse(row.value) as string) : null;
 }
 

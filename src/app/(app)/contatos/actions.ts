@@ -97,7 +97,7 @@ export async function deleteContact(id: string): Promise<{ error?: string }> {
     .select({ id: budgets.id })
     .from(budgets)
     .where(eq(budgets.contactId, id))
-    .get();
+    .then((rows) => rows[0]);
 
   if (linkedBudget) {
     return {

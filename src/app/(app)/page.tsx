@@ -14,12 +14,12 @@ export default async function DashboardPage() {
   const user = await requireUser();
 
   const [contactCount, openBudgets, recentBudgets] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(contacts).get(),
+    db.select({ count: sql<number>`count(*)` }).from(contacts).then((rows) => rows[0]),
     db
       .select({ count: sql<number>`count(*)` })
       .from(budgets)
       .where(inArray(budgets.status, ["rascunho", "enviado"]))
-      .get(),
+      .then((rows) => rows[0]),
     db
       .select({
         id: budgets.id,

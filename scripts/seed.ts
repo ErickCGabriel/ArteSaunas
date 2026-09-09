@@ -27,7 +27,7 @@ async function main() {
     .select({ id: users.id })
     .from(users)
     .where(eq(users.email, email.toLowerCase()))
-    .get();
+    .then((rows) => rows[0]);
 
   if (existing) {
     console.log(`Usuário ${email} já existe, nada a fazer.`);

@@ -35,7 +35,7 @@ export const getCurrentUser = cache(async (): Promise<SafeUser | null> => {
     .select()
     .from(users)
     .where(eq(users.id, payload.sub))
-    .get();
+    .then((rows) => rows[0]);
 
   if (!user || !user.active || user.tokenVersion !== payload.tokenVersion) {
     return null;

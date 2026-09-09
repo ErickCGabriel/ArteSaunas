@@ -1,6 +1,5 @@
 "use server";
 
-import fs from "node:fs/promises";
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -8,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { contactFiles, contacts } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
-import { getContactFilePath } from "@/lib/storage";
+import { putContactFile, removeContactFile } from "@/lib/storage";
 
 // Uploading/removing a file counts as "editing" the contact, so it shows up
 // when sorting the Contatos list by last-updated.
@@ -44,14 +43,15 @@ export async function uploadContactFile(
 
   const storedName = `${nanoid()}-${sanitizeFileName(file.name)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(getContactFilePath(contactId, storedName), buffer);
+  const mimeType = file.type || "application/octet-stream";
+  await putContactFile(contactId, storedName, buffer, mimeType);
 
   await db.insert(contactFiles).values({
     id: nanoid(),
     contactId,
     storedName,
     originalName: file.name,
-    mimeType: file.type || "application/octet-stream",
+    mimeType,
     sizeBytes: file.size,
     uploadedById: user.id,
   });
@@ -71,12 +71,12 @@ export async function deleteContactFile(
     .select()
     .from(contactFiles)
     .where(eq(contactFiles.id, fileId))
-    .get();
+    .then((rows) => rows[0]);
 
   if (!record) return { error: "Arquivo não encontrado." };
 
   await db.delete(contactFiles).where(eq(contactFiles.id, fileId));
-  await fs.unlink(getContactFilePath(record.contactId, record.storedName)).catch(() => {});
+  await removeContactFile(record.contactId, record.storedName).catch(() => {});
   await touchContact(record.contactId);
 
   revalidatePath(`/contatos/${record.contactId}`);

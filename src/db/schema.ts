@@ -1,22 +1,23 @@
-import { sql } from "drizzle-orm";
 import {
-  sqliteTable,
+  pgTable,
   text,
   integer,
   real,
+  boolean,
+  timestamp,
   index,
-} from "drizzle-orm/sqlite-core";
+} from "drizzle-orm/pg-core";
 
 const timestamps = {
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
+  createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch('subsec') * 1000)`),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch('subsec') * 1000)`),
+    .defaultNow(),
 };
 
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
@@ -24,13 +25,13 @@ export const users = sqliteTable("users", {
   role: text("role", { enum: ["admin", "operador"] })
     .notNull()
     .default("operador"),
-  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  active: boolean("active").notNull().default(true),
   // Bumping this invalidates every existing session cookie for the user.
   tokenVersion: integer("token_version").notNull().default(0),
   ...timestamps,
 });
 
-export const contacts = sqliteTable(
+export const contacts = pgTable(
   "contacts",
   {
     id: text("id").primaryKey(),
@@ -47,7 +48,7 @@ export const contacts = sqliteTable(
   (table) => [index("contacts_name_idx").on(table.name)]
 );
 
-export const budgets = sqliteTable(
+export const budgets = pgTable(
   "budgets",
   {
     id: text("id").primaryKey(),
@@ -62,7 +63,7 @@ export const budgets = sqliteTable(
       .notNull()
       .references(() => contacts.id, { onDelete: "restrict" }),
     notes: text("notes"),
-    validUntil: integer("valid_until", { mode: "timestamp_ms" }),
+    validUntil: timestamp("valid_until", { withTimezone: true }),
     createdById: text("created_by_id").references(() => users.id, {
       onDelete: "set null",
     }),
@@ -74,7 +75,7 @@ export const budgets = sqliteTable(
   ]
 );
 
-export const budgetItems = sqliteTable(
+export const budgetItems = pgTable(
   "budget_items",
   {
     id: text("id").primaryKey(),
@@ -89,16 +90,16 @@ export const budgetItems = sqliteTable(
   (table) => [index("budget_items_budget_idx").on(table.budgetId)]
 );
 
-export const contactFiles = sqliteTable(
+export const contactFiles = pgTable(
   "contact_files",
   {
     id: text("id").primaryKey(),
     contactId: text("contact_id")
       .notNull()
       .references(() => contacts.id, { onDelete: "cascade" }),
-    // Name used on disk (data/uploads/<contactId>/<storedName>) — random, to
-    // avoid path traversal / collisions. The original name is kept separately
-    // for display and for the download filename.
+    // Key inside the Supabase Storage bucket (contact-files/<contactId>/<storedName>)
+    // — random, to avoid path traversal / collisions. The original name is
+    // kept separately for display and for the download filename.
     storedName: text("stored_name").notNull(),
     originalName: text("original_name").notNull(),
     mimeType: text("mime_type").notNull(),
@@ -106,21 +107,21 @@ export const contactFiles = sqliteTable(
     uploadedById: text("uploaded_by_id").references(() => users.id, {
       onDelete: "set null",
     }),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch('subsec') * 1000)`),
+      .defaultNow(),
   },
   (table) => [index("contact_files_contact_idx").on(table.contactId)]
 );
 
 // Single-row-per-key store for small pieces of app config (Google OAuth
 // tokens, connected calendar id, etc.) that don't warrant their own table.
-export const appSettings = sqliteTable("app_settings", {
+export const appSettings = pgTable("app_settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch('subsec') * 1000)`),
+    .defaultNow(),
 });
 
 export type User = typeof users.$inferSelect;

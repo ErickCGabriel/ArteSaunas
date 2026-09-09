@@ -33,7 +33,7 @@ export async function loginAction(
 
   const { email, password, next } = parsed.data;
 
-  const user = await db.select().from(users).where(eq(users.email, email)).get();
+  const user = await db.select().from(users).where(eq(users.email, email)).then((rows) => rows[0]);
 
   // Same generic message whether the email doesn't exist or the password is
   // wrong, and same bcrypt.compare cost either way — no timing/enumeration hints.

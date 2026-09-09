@@ -21,7 +21,7 @@ export default async function OrcamentoDetailPage({
     .select()
     .from(budgets)
     .where(eq(budgets.id, id))
-    .get();
+    .then((rows) => rows[0]);
 
   if (!budget) notFound();
 

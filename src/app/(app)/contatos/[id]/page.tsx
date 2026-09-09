@@ -22,7 +22,7 @@ export default async function ContatoDetailPage({
 }) {
   const { id } = await params;
 
-  const contact = await db.select().from(contacts).where(eq(contacts.id, id)).get();
+  const contact = await db.select().from(contacts).where(eq(contacts.id, id)).then((rows) => rows[0]);
   if (!contact) notFound();
 
   const [linkedBudgets, files] = await Promise.all([

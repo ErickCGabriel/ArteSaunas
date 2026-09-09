@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { or, like, asc, desc } from "drizzle-orm";
+import { or, ilike, asc, desc } from "drizzle-orm";
 import { PlusIcon, SearchIcon } from "lucide-react";
 
 import { db } from "@/db";
@@ -45,9 +45,9 @@ export default async function ContatosPage({
     .where(
       term
         ? or(
-            like(contacts.name, `%${term}%`),
-            like(contacts.phone, `%${term}%`),
-            like(contacts.email, `%${term}%`)
+            ilike(contacts.name, `%${term}%`),
+            ilike(contacts.phone, `%${term}%`),
+            ilike(contacts.email, `%${term}%`)
           )
         : undefined
     )

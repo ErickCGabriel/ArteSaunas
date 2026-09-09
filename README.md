@@ -1,26 +1,38 @@
 # Arte Saunas — Sistema de Gestão
 
 Aplicativo web interno para a Arte Saunas: orçamentos, contatos (CRM) e
-agenda integrada ao Google Calendar. Feito para rodar self-hosted, com os
-dados guardados em SQLite dentro do próprio servidor (Proxmox/LXC), sem
-depender de nenhum serviço de nuvem para os dados do negócio.
+agenda integrada ao Google Calendar.
+
+> **Estado atual (temporário): Vercel + Supabase.** O plano original era
+> self-hosted (Proxmox + SQLite + arquivos em disco), que é o destino final.
+> Para dar tempo de estabilizar a homelab, o app está rodando por um período
+> de teste no Vercel com Postgres/Storage no Supabase. Veja
+> "Migrando de volta pro Proxmox" no fim deste README para o checklist de
+> quando for a hora de voltar.
 
 ## Stack
 
 - **Next.js** (App Router) + TypeScript + Tailwind + shadcn/ui (tema escuro/premium)
-- **SQLite** via Drizzle ORM (arquivo único, fácil de fazer backup)
-- Autenticação por sessão (cookie assinado), papéis **Admin** e **Operador**
+- **Postgres** (Supabase, por enquanto) via Drizzle ORM
+- Autenticação por sessão (cookie assinado, sistema próprio — **não** usa
+  Supabase Auth), papéis **Admin** e **Operador**
 - **PDF** de orçamento via `@react-pdf/renderer`
 - Integração **Google Calendar** via OAuth2 (a conta conectada é a fonte de
   verdade dos eventos — o app só cria/edita/apaga, não faz sync de dois lados)
 - **Arquivos por contato** (plantas, fotos, documentos que o cliente manda),
-  guardados em `data/uploads/` no próprio servidor, não em nuvem de terceiros
+  guardados no Supabase Storage (bucket privado, acessado só via server-side
+  com a service role key — nunca exposto ao navegador)
 
 ## Rodando localmente
+
+Precisa de um projeto Postgres (Supabase ou outro) acessível — não tem mais
+um banco local zero-config como no SQLite.
 
 ```bash
 npm install
 cp .env.example .env
+# preencha DATABASE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY no .env
+
 # gere um AUTH_SECRET aleatório:
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 # cole o resultado em AUTH_SECRET no .env
@@ -35,9 +47,13 @@ Abra http://localhost:3000 e entre com o e-mail/senha do seed.
 
 ### Variáveis de ambiente
 
-Veja `.env.example` para a lista completa. As essenciais para rodar local:
+Veja `.env.example` para a lista completa e onde encontrar cada valor no
+painel do Supabase. As essenciais:
 
-- `DATABASE_PATH` — caminho do arquivo SQLite
+- `DATABASE_URL` — connection string do Postgres (use o "Transaction
+  pooler", porta 6543, em produção/serverless)
+- `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — para o Storage dos
+  arquivos de contato
 - `AUTH_SECRET` — string aleatória para assinar os cookies de sessão
 
 Para a integração com o Google Calendar (pode ser configurada depois, direto
@@ -53,7 +69,7 @@ pela tela Admin/Calendário assim que estiver rodando):
 | Comando | O que faz |
 |---|---|
 | `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Build de produção (standalone) |
+| `npm run build` | Build de produção |
 | `npm run start` | Roda o build de produção |
 | `npm run db:generate` | Gera uma nova migração a partir do schema |
 | `npm run db:migrate` | Aplica migrações pendentes |
@@ -69,73 +85,50 @@ pela tela Admin/Calendário assim que estiver rodando):
    "Externo" + adicionar os e-mails da equipe como usuários de teste caso
    seja uma conta Gmail comum.
 4. Crie uma credencial **OAuth client ID** (tipo "Web application") em
-   "Credenciais". Em "URIs de redirecionamento autorizados", adicione:
-   `https://gestao.artesaunas.com.br/api/google/callback` (troque pelo seu
-   domínio real; use `http://localhost:3000/api/google/callback` também se
-   for testar local).
+   "Credenciais". Em "URIs de redirecionamento autorizados", adicione a URL
+   do seu deploy no Vercel, ex: `https://artesaunas.vercel.app/api/google/callback`
+   (use `http://localhost:3000/api/google/callback` também se for testar local).
 5. Copie o **Client ID** e **Client Secret** para `GOOGLE_CLIENT_ID` e
-   `GOOGLE_CLIENT_SECRET` no `.env`, e o redirect URI usado para
-   `GOOGLE_REDIRECT_URI`.
-6. Reinicie o app, faça login como Admin, vá em **Calendário** e clique em
-   "Conectar Google Calendar".
+   `GOOGLE_CLIENT_SECRET`, e o redirect URI usado para `GOOGLE_REDIRECT_URI`.
+6. Faça login como Admin, vá em **Calendário** e clique em "Conectar Google
+   Calendar".
 
-## Implantação no Proxmox (homelab)
+## Implantação no Vercel (atual)
 
-Os scripts em `infra/` automatizam a criação do container e a configuração
-de cada peça. Passo a passo:
-
-1. **Criar o LXC** — no host Proxmox (via SSH):
+1. Projeto Vercel conectado a este repositório/branch.
+2. Configure as env vars do `.env.example` diretamente no painel do Vercel
+   (Project Settings → Environment Variables) — nunca cole segredos em chat
+   ou commite no repo.
+3. Deploy automático a cada push.
+4. Depois do primeiro deploy, rode a migração e o seed apontando pro banco
+   do Supabase (`DATABASE_URL` do `.env` local com o mesmo valor configurado
+   no Vercel):
    ```bash
-   # copie infra/proxmox/create-lxc.sh para o host, ajuste as variáveis no
-   # topo do arquivo (CTID, storage, rede) e rode:
-   bash create-lxc.sh
+   npx drizzle-kit migrate
+   SEED_ADMIN_EMAIL=voce@exemplo.com SEED_ADMIN_PASSWORD="senha-forte" npm run db:seed
    ```
-2. **Configurar o app** — dentro do container (`pct enter <CTID>`), copie a
-   pasta `infra/` (ou clone o repo direto) e rode:
-   ```bash
-   bash infra/app/setup.sh
-   ```
-   Na primeira execução ele cria o `.env` e pede para você editá-lo (chave
-   `AUTH_SECRET` já vem gerada; preencha as credenciais do Google se for
-   configurar agora). Rode o script de novo depois de editar — ele instala
-   dependências, builda, roda migrações e sobe o serviço systemd
-   `artesaunas`.
+5. Atualize o `GOOGLE_REDIRECT_URI` no Google Cloud Console e no `.env` do
+   Vercel com a URL final do deploy.
 
-   > Se `npm run build` ficar sem memória no container pequeno, aumente a
-   > RAM temporariamente pelo host (`pct set <CTID> --memory 2048`), rode o
-   > setup de novo, e depois volte para o valor baixo (`pct set <CTID>
-   > --memory 768`) — o app rodando consome bem menos do que o build.
+## Migrando de volta pro Proxmox
 
-3. **Expor via Cloudflare Tunnel** — dentro do container:
-   ```bash
-   bash infra/cloudflared/setup.sh
-   ```
-   Pré-requisito: o domínio `artesaunas.com.br` precisa estar com o DNS
-   gerenciado pela Cloudflare. O script instala o `cloudflared`, pede login
-   interativo (abre uma URL para autorizar) e configura tudo como serviço.
+Quando a homelab estiver pronta, o caminho é reverter esta ponte temporária
+para o self-hosted original (SQLite + Supabase Storage → disco local):
 
-4. **Backup automático pro OneDrive** — siga
-   `infra/backup/rclone-setup.md` (configuração interativa única do
-   `rclone`), depois ative o timer:
-   ```bash
-   systemctl enable --now artesaunas-backup.timer
-   ```
-   O backup cobre tanto o banco (snapshot diário, mantém os últimos 14 dias)
-   quanto os arquivos enviados por clientes em `data/uploads/` (cópia
-   incremental, sem apagar nada no remoto).
+1. `git log` para achar o commit anterior à migração pro Supabase (mensagem
+   "Migrate to Supabase...") e reverter `src/db/schema.ts`, `src/db/index.ts`,
+   `drizzle.config.ts` e `src/lib/storage.ts` para as versões SQLite/disco
+   local de antes (estão preservadas no histórico do git).
+2. Escrever um script pontual de export/import: ler todas as linhas de cada
+   tabela do Postgres (Supabase) e inserir no SQLite novo, e baixar os
+   arquivos do bucket `contact-files` do Supabase Storage para
+   `data/uploads/<contactId>/`.
+3. Seguir o passo a passo de "Implantação no Proxmox" (scripts em `infra/`,
+   já prontos e testados) para colocar o LXC no ar.
+4. Atualizar o `GOOGLE_REDIRECT_URI` de volta para o domínio do Proxmox.
+5. Cancelar/pausar o projeto no Vercel e (se não for mais usar) apagar o
+   projeto no Supabase.
 
-5. **Deploys seguintes** — depois que o setup inicial estiver feito, para
-   subir código novo:
-   ```bash
-   bash infra/app/deploy.sh
-   ```
-
-### Por que esse formato
-
-- **LXC, não VM**: bem mais leve, sem overhead de virtualizar hardware —
-  importante já que o objetivo é sobrar recurso pro resto da homelab.
-- **Sem Docker**: Node.js + systemd direto, evitando a sobrecarga do
-  daemon do Docker. `output: "standalone"` no `next.config.ts` mantém o
-  `node_modules` copiado enxuto (só o necessário para rodar).
-- **SQLite**: sem processo de banco separado; backup é só copiar um arquivo.
-- **Cloudflare Tunnel**: nenhuma porta aberta no roteador, HTTPS automático.
+Os scripts em `infra/` (Proxmox/Cloudflare Tunnel/backup rclone) já estão
+prontos desde antes dessa ponte temporária — não precisam de mudança, só
+esperam o app voltar a rodar com SQLite local.

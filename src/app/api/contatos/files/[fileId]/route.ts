@@ -1,11 +1,10 @@
-import fs from "node:fs/promises";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 import { contactFiles } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { getContactFilePath } from "@/lib/storage";
+import { getContactFileBuffer } from "@/lib/storage";
 
 export async function GET(
   _request: Request,
@@ -22,7 +21,7 @@ export async function GET(
     .select()
     .from(contactFiles)
     .where(eq(contactFiles.id, fileId))
-    .get();
+    .then((rows) => rows[0]);
 
   if (!record) {
     return new NextResponse("Arquivo não encontrado.", { status: 404 });
@@ -30,9 +29,9 @@ export async function GET(
 
   let buffer: Buffer;
   try {
-    buffer = await fs.readFile(getContactFilePath(record.contactId, record.storedName));
+    buffer = await getContactFileBuffer(record.contactId, record.storedName);
   } catch {
-    return new NextResponse("Arquivo não encontrado no disco.", { status: 404 });
+    return new NextResponse("Arquivo não encontrado no storage.", { status: 404 });
   }
 
   return new NextResponse(new Uint8Array(buffer), {
