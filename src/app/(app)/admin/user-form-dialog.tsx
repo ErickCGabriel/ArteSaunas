@@ -28,6 +28,7 @@ import {
 type UserData = {
   id: string;
   name: string;
+  username: string;
   email: string;
   role: "admin" | "operador";
 };
@@ -94,6 +95,19 @@ export function UserFormDialog({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="name">Nome *</Label>
             <Input id="name" name="name" required defaultValue={user?.name} />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="username">Usuário *</Label>
+            <Input
+              id="username"
+              name="username"
+              required
+              minLength={3}
+              maxLength={32}
+              placeholder="seu.usuario"
+              defaultValue={user?.username}
+            />
           </div>
 
           {!user && (

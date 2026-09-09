@@ -15,6 +15,13 @@
       "when": 1788958700000,
       "tag": "0001_enable_rls_and_storage_bucket",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788971148265,
+      "tag": "0002_omniscient_hitman",
+      "breakpoints": true
     }
   ]
 }

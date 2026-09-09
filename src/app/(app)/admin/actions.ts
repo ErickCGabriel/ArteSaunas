@@ -12,8 +12,17 @@ import { hashPassword } from "@/lib/auth/password";
 
 const roleSchema = z.enum(["admin", "operador"]);
 
+const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3, "O usuário precisa ter pelo menos 3 caracteres.")
+  .max(32, "O usuário pode ter no máximo 32 caracteres.")
+  .regex(/^[a-z0-9._-]+$/, "Use apenas letras, números, ponto, hífen ou underline.");
+
 const createUserSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome."),
+  username: usernameSchema,
   email: z.string().trim().toLowerCase().email("E-mail inválido."),
   password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres."),
   role: roleSchema,
@@ -21,6 +30,7 @@ const createUserSchema = z.object({
 
 const updateUserSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome."),
+  username: usernameSchema,
   role: roleSchema,
 });
 
@@ -46,6 +56,7 @@ export async function createUser(
 
   const parsed = createUserSchema.safeParse({
     name: formData.get("name"),
+    username: formData.get("username"),
     email: formData.get("email"),
     password: formData.get("password"),
     role: formData.get("role"),
@@ -55,14 +66,24 @@ export async function createUser(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
-  const existing = await db
+  const existingEmail = await db
     .select({ id: users.id })
     .from(users)
     .where(eq(users.email, parsed.data.email))
     .then((rows) => rows[0]);
 
-  if (existing) {
+  if (existingEmail) {
     return { error: "Já existe um usuário com esse e-mail." };
+  }
+
+  const existingUsername = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.username, parsed.data.username))
+    .then((rows) => rows[0]);
+
+  if (existingUsername) {
+    return { error: "Já existe um usuário com esse nome de usuário." };
   }
 
   const passwordHash = await hashPassword(parsed.data.password);
@@ -70,6 +91,7 @@ export async function createUser(
   await db.insert(users).values({
     id: nanoid(),
     name: parsed.data.name,
+    username: parsed.data.username,
     email: parsed.data.email,
     passwordHash,
     role: parsed.data.role,
@@ -89,6 +111,7 @@ export async function updateUser(
 
   const parsed = updateUserSchema.safeParse({
     name: formData.get("name"),
+    username: formData.get("username"),
     role: formData.get("role"),
   });
 
@@ -109,9 +132,24 @@ export async function updateUser(
     }
   }
 
+  const existingUsername = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.username, parsed.data.username), ne(users.id, id)))
+    .then((rows) => rows[0]);
+
+  if (existingUsername) {
+    return { error: "Já existe um usuário com esse nome de usuário." };
+  }
+
   await db
     .update(users)
-    .set({ name: parsed.data.name, role: parsed.data.role, updatedAt: new Date() })
+    .set({
+      name: parsed.data.name,
+      username: parsed.data.username,
+      role: parsed.data.role,
+      updatedAt: new Date(),
+    })
     .where(eq(users.id, id));
 
   revalidatePath("/admin");

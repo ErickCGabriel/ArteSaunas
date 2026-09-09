@@ -35,7 +35,7 @@ export default async function LoginPage({
           <CardHeader>
             <CardTitle>Entrar na sua conta</CardTitle>
             <CardDescription>
-              Use o e-mail e senha cadastrados pelo administrador.
+              Use o usuário e senha cadastrados pelo administrador.
             </CardDescription>
           </CardHeader>
           <CardContent>

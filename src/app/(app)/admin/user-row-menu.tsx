@@ -26,6 +26,7 @@ import { deleteUser, toggleUserActive } from "./actions";
 type UserData = {
   id: string;
   name: string;
+  username: string;
   email: string;
   role: "admin" | "operador";
   active: boolean;

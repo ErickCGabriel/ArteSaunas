@@ -21,14 +21,14 @@ export function LoginForm({ next }: { next?: string }) {
       <input type="hidden" name="next" value={next ?? ""} />
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="email">E-mail</Label>
+        <Label htmlFor="username">Usuário</Label>
         <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
+          id="username"
+          name="username"
+          type="text"
+          autoComplete="username"
           required
-          placeholder="voce@artesaunas.com.br"
+          placeholder="seu.usuario"
         />
       </div>
 

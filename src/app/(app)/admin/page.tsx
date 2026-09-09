@@ -28,6 +28,7 @@ export default async function AdminPage() {
     .select({
       id: users.id,
       name: users.name,
+      username: users.username,
       email: users.email,
       role: users.role,
       active: users.active,
@@ -62,6 +63,7 @@ export default async function AdminPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Usuário</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Acesso</TableHead>
                 <TableHead>Status</TableHead>
@@ -79,6 +81,7 @@ export default async function AdminPage() {
                       </span>
                     )}
                   </TableCell>
+                  <TableCell className="text-muted-foreground">{user.username}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === "admin" ? "default" : "secondary"}>

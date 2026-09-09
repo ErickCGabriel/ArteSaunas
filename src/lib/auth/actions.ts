@@ -10,7 +10,7 @@ import { verifyPassword } from "./password";
 import { clearSessionCookie, setSessionCookie } from "./session";
 
 const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().email("Informe um e-mail válido."),
+  username: z.string().trim().toLowerCase().min(1, "Informe o usuário."),
   password: z.string().min(1, "Informe a senha."),
   next: z.string().optional(),
 });
@@ -22,7 +22,7 @@ export async function loginAction(
   formData: FormData
 ): Promise<LoginState> {
   const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
+    username: formData.get("username"),
     password: formData.get("password"),
     next: formData.get("next"),
   });
@@ -31,18 +31,18 @@ export async function loginAction(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
-  const { email, password, next } = parsed.data;
+  const { username, password, next } = parsed.data;
 
-  const user = await db.select().from(users).where(eq(users.email, email)).then((rows) => rows[0]);
+  const user = await db.select().from(users).where(eq(users.username, username)).then((rows) => rows[0]);
 
-  // Same generic message whether the email doesn't exist or the password is
-  // wrong, and same bcrypt.compare cost either way — no timing/enumeration hints.
+  // Same generic message whether the username doesn't exist or the password
+  // is wrong, and same bcrypt.compare cost either way — no timing/enumeration hints.
   const passwordMatches = user
     ? await verifyPassword(password, user.passwordHash)
     : await verifyPassword(password, "$2b$12$invalidinvalidinvalidinuInvalid1234567890abcdefghi");
 
   if (!user || !passwordMatches || !user.active) {
-    return { error: "E-mail ou senha incorretos." };
+    return { error: "Usuário ou senha incorretos." };
   }
 
   await setSessionCookie({

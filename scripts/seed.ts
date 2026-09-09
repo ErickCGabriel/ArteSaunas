@@ -9,11 +9,12 @@ async function main() {
   const email = process.env.SEED_ADMIN_EMAIL;
   const password = process.env.SEED_ADMIN_PASSWORD;
   const name = process.env.SEED_ADMIN_NAME ?? "Admin";
+  const username = process.env.SEED_ADMIN_USERNAME;
 
-  if (!email || !password) {
+  if (!email || !password || !username) {
     console.error(
-      "Defina SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD antes de rodar: \n" +
-        "  SEED_ADMIN_EMAIL=voce@exemplo.com SEED_ADMIN_PASSWORD=senha-forte npm run db:seed"
+      "Defina SEED_ADMIN_EMAIL, SEED_ADMIN_USERNAME e SEED_ADMIN_PASSWORD antes de rodar: \n" +
+        "  SEED_ADMIN_EMAIL=voce@exemplo.com SEED_ADMIN_USERNAME=seu.usuario SEED_ADMIN_PASSWORD=senha-forte npm run db:seed"
     );
     process.exit(1);
   }
@@ -39,6 +40,7 @@ async function main() {
   await db.insert(users).values({
     id: nanoid(),
     name,
+    username: username.toLowerCase(),
     email: email.toLowerCase(),
     passwordHash,
     role: "admin",

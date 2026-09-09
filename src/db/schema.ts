@@ -20,6 +20,8 @@ const timestamps = {
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  // Login handle — distinct from `name`, e.g. name "Erick Gabriel" / username "erickg".
+  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["admin", "operador"] })

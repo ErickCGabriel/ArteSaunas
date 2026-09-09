@@ -38,12 +38,12 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 # cole o resultado em AUTH_SECRET no .env
 
 npx drizzle-kit migrate
-SEED_ADMIN_EMAIL=voce@exemplo.com SEED_ADMIN_PASSWORD="senha-forte" npm run db:seed
+SEED_ADMIN_EMAIL=voce@exemplo.com SEED_ADMIN_USERNAME=seu.usuario SEED_ADMIN_PASSWORD="senha-forte" npm run db:seed
 
 npm run dev
 ```
 
-Abra http://localhost:3000 e entre com o e-mail/senha do seed.
+Abra http://localhost:3000 e entre com o usuário/senha do seed.
 
 ### Variáveis de ambiente
 
@@ -74,7 +74,7 @@ pela tela Admin/Calendário assim que estiver rodando):
 | `npm run db:generate` | Gera uma nova migração a partir do schema |
 | `npm run db:migrate` | Aplica migrações pendentes |
 | `npm run db:studio` | Abre o Drizzle Studio para inspecionar o banco |
-| `npm run db:seed` | Cria o usuário admin inicial (`SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD`) |
+| `npm run db:seed` | Cria o usuário admin inicial (`SEED_ADMIN_EMAIL`/`SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD`) |
 
 ## Configurando o Google Calendar
 
@@ -105,7 +105,7 @@ pela tela Admin/Calendário assim que estiver rodando):
    no Vercel):
    ```bash
    npx drizzle-kit migrate
-   SEED_ADMIN_EMAIL=voce@exemplo.com SEED_ADMIN_PASSWORD="senha-forte" npm run db:seed
+   SEED_ADMIN_EMAIL=voce@exemplo.com SEED_ADMIN_USERNAME=seu.usuario SEED_ADMIN_PASSWORD="senha-forte" npm run db:seed
    ```
 5. Atualize o `GOOGLE_REDIRECT_URI` no Google Cloud Console e no `.env` do
    Vercel com a URL final do deploy.
