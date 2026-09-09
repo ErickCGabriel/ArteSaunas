@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DownloadIcon, Trash2Icon } from "lucide-react";
+import { DownloadIcon, ReceiptIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
@@ -28,6 +29,12 @@ export function BudgetHeaderActions({
           <DownloadIcon className="size-4" />
           Baixar PDF
         </a>
+      </Button>
+      <Button variant="outline" asChild>
+        <Link href={`/notas-fiscais?novo=${budgetId}`}>
+          <ReceiptIcon className="size-4" />
+          Gerar Nota Fiscal
+        </Link>
       </Button>
       <ConfirmDeleteButton
         id={budgetId}

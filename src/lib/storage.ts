@@ -17,36 +17,58 @@ function getStorageClient() {
   return createClient(url, serviceRoleKey, { auth: { persistSession: false } });
 }
 
-function objectKey(contactId: string, storedName: string) {
-  return `${contactId}/${storedName}`;
+function objectKey(...segments: string[]) {
+  return segments.join("/");
 }
 
-export async function putContactFile(
+async function putFile(key: string, data: Buffer, contentType: string) {
+  const { error } = await getStorageClient()
+    .storage.from(BUCKET)
+    .upload(key, data, { contentType, upsert: false });
+  if (error) throw error;
+}
+
+async function getFileBuffer(key: string): Promise<Buffer> {
+  const { data, error } = await getStorageClient().storage.from(BUCKET).download(key);
+  if (error) throw error;
+  return Buffer.from(await data.arrayBuffer());
+}
+
+async function removeFile(key: string) {
+  const { error } = await getStorageClient().storage.from(BUCKET).remove([key]);
+  if (error) throw error;
+}
+
+export function putContactFile(
   contactId: string,
   storedName: string,
   data: Buffer,
   contentType: string
 ) {
-  const { error } = await getStorageClient()
-    .storage.from(BUCKET)
-    .upload(objectKey(contactId, storedName), data, { contentType, upsert: false });
-  if (error) throw error;
+  return putFile(objectKey(contactId, storedName), data, contentType);
 }
 
-export async function getContactFileBuffer(
-  contactId: string,
-  storedName: string
-): Promise<Buffer> {
-  const { data, error } = await getStorageClient()
-    .storage.from(BUCKET)
-    .download(objectKey(contactId, storedName));
-  if (error) throw error;
-  return Buffer.from(await data.arrayBuffer());
+export function getContactFileBuffer(contactId: string, storedName: string) {
+  return getFileBuffer(objectKey(contactId, storedName));
 }
 
-export async function removeContactFile(contactId: string, storedName: string) {
-  const { error } = await getStorageClient()
-    .storage.from(BUCKET)
-    .remove([objectKey(contactId, storedName)]);
-  if (error) throw error;
+export function removeContactFile(contactId: string, storedName: string) {
+  return removeFile(objectKey(contactId, storedName));
+}
+
+export function putInvoiceFile(
+  invoiceId: string,
+  storedName: string,
+  data: Buffer,
+  contentType: string
+) {
+  return putFile(objectKey("invoices", invoiceId, storedName), data, contentType);
+}
+
+export function getInvoiceFileBuffer(invoiceId: string, storedName: string) {
+  return getFileBuffer(objectKey("invoices", invoiceId, storedName));
+}
+
+export function removeInvoiceFile(invoiceId: string, storedName: string) {
+  return removeFile(objectKey("invoices", invoiceId, storedName));
 }

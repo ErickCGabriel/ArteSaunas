@@ -116,6 +116,54 @@ export const contactFiles = pgTable(
   (table) => [index("contact_files_contact_idx").on(table.contactId)]
 );
 
+export const invoices = pgTable(
+  "invoices",
+  {
+    id: text("id").primaryKey(),
+    // Número da nota fiscal emitida no sistema fiscal real da empresa —
+    // digitado manualmente, nunca gerado por aqui.
+    number: text("number").notNull().unique(),
+    budgetId: text("budget_id")
+      .notNull()
+      .references(() => budgets.id, { onDelete: "restrict" }),
+    issueDate: timestamp("issue_date", { withTimezone: true }).notNull(),
+    totalCents: integer("total_cents").notNull().default(0),
+    status: text("status", { enum: ["emitida", "cancelada"] })
+      .notNull()
+      .default("emitida"),
+    notes: text("notes"),
+    createdById: text("created_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    ...timestamps,
+  },
+  (table) => [
+    index("invoices_budget_idx").on(table.budgetId),
+    index("invoices_status_idx").on(table.status),
+  ]
+);
+
+export const invoiceFiles = pgTable(
+  "invoice_files",
+  {
+    id: text("id").primaryKey(),
+    invoiceId: text("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "cascade" }),
+    storedName: text("stored_name").notNull(),
+    originalName: text("original_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    uploadedById: text("uploaded_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("invoice_files_invoice_idx").on(table.invoiceId)]
+);
+
 // Single-row-per-key store for small pieces of app config (Google OAuth
 // tokens, connected calendar id, etc.) that don't warrant their own table.
 export const appSettings = pgTable("app_settings", {
@@ -136,3 +184,7 @@ export type BudgetItem = typeof budgetItems.$inferSelect;
 export type NewBudgetItem = typeof budgetItems.$inferInsert;
 export type ContactFile = typeof contactFiles.$inferSelect;
 export type NewContactFile = typeof contactFiles.$inferInsert;
+export type Invoice = typeof invoices.$inferSelect;
+export type NewInvoice = typeof invoices.$inferInsert;
+export type InvoiceFile = typeof invoiceFiles.$inferSelect;
+export type NewInvoiceFile = typeof invoiceFiles.$inferInsert;

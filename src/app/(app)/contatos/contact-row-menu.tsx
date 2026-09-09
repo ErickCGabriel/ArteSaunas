@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import Link from "next/link";
+import { EyeIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,12 @@ export function ContactRowMenu({ contact }: { contact: ContactData }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/contatos/${contact.id}`}>
+              <EyeIcon className="size-4" />
+              Ver ficha
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setEditOpen(true)}>
             <PencilIcon className="size-4" />
             Editar

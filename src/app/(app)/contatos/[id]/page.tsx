@@ -5,10 +5,11 @@ import { notFound } from "next/navigation";
 import { PencilIcon } from "lucide-react";
 
 import { db } from "@/db";
-import { budgetItems, budgets, contactFiles, contacts } from "@/db/schema";
+import { budgetItems, budgets, contactFiles, contacts, invoices } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetStatusBadge } from "@/components/budget-status-badge";
+import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
 import { formatCentsToBRL } from "@/lib/currency";
 import { ContactFormDialog } from "../contact-form-dialog";
 import { ContactFiles } from "./contact-files";
@@ -25,7 +26,7 @@ export default async function ContatoDetailPage({
   const contact = await db.select().from(contacts).where(eq(contacts.id, id)).then((rows) => rows[0]);
   if (!contact) notFound();
 
-  const [linkedBudgets, files] = await Promise.all([
+  const [linkedBudgets, linkedInvoices, files] = await Promise.all([
     db
       .select({
         id: budgets.id,
@@ -39,6 +40,18 @@ export default async function ContatoDetailPage({
       .where(eq(budgets.contactId, id))
       .groupBy(budgets.id)
       .orderBy(desc(budgets.createdAt)),
+    db
+      .select({
+        id: invoices.id,
+        number: invoices.number,
+        issueDate: invoices.issueDate,
+        totalCents: invoices.totalCents,
+        status: invoices.status,
+      })
+      .from(invoices)
+      .innerJoin(budgets, eq(budgets.id, invoices.budgetId))
+      .where(eq(budgets.contactId, id))
+      .orderBy(desc(invoices.issueDate)),
     db
       .select()
       .from(contactFiles)
@@ -127,6 +140,35 @@ export default async function ContatoDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Notas Fiscais</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-1">
+          {linkedInvoices.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhuma nota fiscal registrada para este contato ainda.
+            </p>
+          ) : (
+            linkedInvoices.map((invoice) => (
+              <Link
+                key={invoice.id}
+                href={`/notas-fiscais/${invoice.id}`}
+                className="flex items-center justify-between gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent/60"
+              >
+                <span className="font-medium">{invoice.number}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-muted-foreground">
+                    {formatCentsToBRL(invoice.totalCents)}
+                  </span>
+                  <InvoiceStatusBadge status={invoice.status} />
+                </div>
+              </Link>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
