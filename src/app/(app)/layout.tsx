@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { requireUser } from "@/lib/auth/current-user";
@@ -21,11 +22,15 @@ export default async function AppLayout({
       <header className="border-b border-border bg-card/40">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex flex-wrap items-center gap-4">
-            <Link
-              href="/"
-              className="text-lg font-semibold tracking-tight text-primary"
-            >
-              Arte Saunas
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo.png"
+                alt="Arte Saunas"
+                width={1208}
+                height={283}
+                priority
+                className="h-7 w-auto"
+              />
             </Link>
             <AppNav isAdmin={user.role === "admin"} />
           </div>

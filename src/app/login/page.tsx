@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -22,11 +23,16 @@ export default async function LoginPage({
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-primary">
-            Arte Saunas
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Image
+            src="/logo.png"
+            alt="Arte Saunas"
+            width={1208}
+            height={283}
+            priority
+            className="h-12 w-auto"
+          />
+          <p className="mt-2 text-sm text-muted-foreground">
             Painel de gestão interno
           </p>
         </div>

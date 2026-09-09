@@ -1,7 +1,12 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import fs from "node:fs";
+import path from "node:path";
+
+import { Document, Image, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
 import { formatCentsToBRL } from "@/lib/currency";
 import type { Budget, BudgetItem, Contact } from "@/db/schema";
+
+const logoBuffer = fs.readFileSync(path.join(process.cwd(), "public", "logo.png"));
 
 const styles = StyleSheet.create({
   page: {
@@ -18,7 +23,7 @@ const styles = StyleSheet.create({
     borderBottom: "2 solid #b07d3f",
     paddingBottom: 16,
   },
-  brand: { fontSize: 18, fontFamily: "Helvetica-Bold", color: "#8a5a24" },
+  logo: { width: 140, height: 33, marginBottom: 4 },
   brandSub: { fontSize: 9, color: "#555", marginTop: 2 },
   headerRight: { alignItems: "flex-end" },
   budgetNumber: { fontSize: 12, fontFamily: "Helvetica-Bold" },
@@ -108,7 +113,7 @@ export function BudgetPdf({
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.brand}>Arte Saunas</Text>
+            <Image src={logoBuffer} style={styles.logo} />
             <Text style={styles.brandSub}>Orçamento de serviços</Text>
           </View>
           <View style={styles.headerRight}>

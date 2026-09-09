@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Arte Saunas — Gestão",
   description: "Sistema de gestão da Arte Saunas: orçamentos, contatos e agenda.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-mark.png",
+  },
 };
 
 export default function RootLayout({
