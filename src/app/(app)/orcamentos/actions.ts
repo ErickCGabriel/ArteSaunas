@@ -7,8 +7,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db";
-import { budgetItems, budgets, type Budget } from "@/db/schema";
+import { budgetFiles, budgetItems, budgets, type Budget } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
+import { putBudgetFile, removeBudgetFile } from "@/lib/storage";
 
 const itemSchema = z.object({
   description: z.string().trim().min(1),
@@ -182,5 +183,65 @@ export async function deleteBudget(id: string): Promise<{ error?: string }> {
   await requireUser();
   await db.delete(budgets).where(eq(budgets.id, id));
   revalidatePath("/orcamentos");
+  return {};
+}
+
+const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25MB
+
+function sanitizeFileName(name: string) {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
+}
+
+export type UploadFileState = { error?: string };
+
+export async function uploadBudgetFile(
+  budgetId: string,
+  _prevState: UploadFileState,
+  formData: FormData
+): Promise<UploadFileState> {
+  const user = await requireUser();
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Selecione um arquivo." };
+  }
+  if (file.size > MAX_FILE_BYTES) {
+    return { error: "Arquivo muito grande (máximo 25MB)." };
+  }
+
+  const storedName = `${nanoid()}-${sanitizeFileName(file.name)}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const mimeType = file.type || "application/octet-stream";
+  await putBudgetFile(budgetId, storedName, buffer, mimeType);
+
+  await db.insert(budgetFiles).values({
+    id: nanoid(),
+    budgetId,
+    storedName,
+    originalName: file.name,
+    mimeType,
+    sizeBytes: file.size,
+    uploadedById: user.id,
+  });
+
+  revalidatePath(`/orcamentos/${budgetId}`);
+  return {};
+}
+
+export async function deleteBudgetFile(fileId: string): Promise<{ error?: string }> {
+  await requireUser();
+
+  const record = await db
+    .select()
+    .from(budgetFiles)
+    .where(eq(budgetFiles.id, fileId))
+    .then((rows) => rows[0]);
+
+  if (!record) return { error: "Arquivo não encontrado." };
+
+  await db.delete(budgetFiles).where(eq(budgetFiles.id, fileId));
+  await removeBudgetFile(record.budgetId, record.storedName).catch(() => {});
+
+  revalidatePath(`/orcamentos/${record.budgetId}`);
   return {};
 }

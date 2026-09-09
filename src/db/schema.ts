@@ -116,6 +116,27 @@ export const contactFiles = pgTable(
   (table) => [index("contact_files_contact_idx").on(table.contactId)]
 );
 
+export const budgetFiles = pgTable(
+  "budget_files",
+  {
+    id: text("id").primaryKey(),
+    budgetId: text("budget_id")
+      .notNull()
+      .references(() => budgets.id, { onDelete: "cascade" }),
+    storedName: text("stored_name").notNull(),
+    originalName: text("original_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    uploadedById: text("uploaded_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("budget_files_budget_idx").on(table.budgetId)]
+);
+
 export const invoices = pgTable(
   "invoices",
   {
@@ -184,6 +205,8 @@ export type BudgetItem = typeof budgetItems.$inferSelect;
 export type NewBudgetItem = typeof budgetItems.$inferInsert;
 export type ContactFile = typeof contactFiles.$inferSelect;
 export type NewContactFile = typeof contactFiles.$inferInsert;
+export type BudgetFile = typeof budgetFiles.$inferSelect;
+export type NewBudgetFile = typeof budgetFiles.$inferInsert;
 export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 export type InvoiceFile = typeof invoiceFiles.$inferSelect;

@@ -56,6 +56,23 @@ export function removeContactFile(contactId: string, storedName: string) {
   return removeFile(objectKey(contactId, storedName));
 }
 
+export function putBudgetFile(
+  budgetId: string,
+  storedName: string,
+  data: Buffer,
+  contentType: string
+) {
+  return putFile(objectKey("budgets", budgetId, storedName), data, contentType);
+}
+
+export function getBudgetFileBuffer(budgetId: string, storedName: string) {
+  return getFileBuffer(objectKey("budgets", budgetId, storedName));
+}
+
+export function removeBudgetFile(budgetId: string, storedName: string) {
+  return removeFile(objectKey("budgets", budgetId, storedName));
+}
+
 export function putInvoiceFile(
   invoiceId: string,
   storedName: string,
