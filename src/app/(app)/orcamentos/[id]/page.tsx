@@ -33,7 +33,12 @@ export default async function OrcamentoDetailPage({
       .where(eq(budgetItems.budgetId, id))
       .orderBy(asc(budgetItems.position)),
     db
-      .select({ id: contacts.id, name: contacts.name, address: contacts.address })
+      .select({
+        id: contacts.id,
+        name: contacts.name,
+        phone: contacts.phone,
+        address: contacts.address,
+      })
       .from(contacts)
       .orderBy(asc(contacts.name)),
     db
@@ -70,7 +75,18 @@ export default async function OrcamentoDetailPage({
               id: budget.id,
               title: budget.title,
               contactId: budget.contactId,
-              address: budget.address,
+              requesterName: budget.requesterName,
+              requesterPhone: budget.requesterPhone,
+              addressStreet: budget.addressStreet,
+              addressNumber: budget.addressNumber,
+              addressNeighborhood: budget.addressNeighborhood,
+              addressCity: budget.addressCity,
+              addressState: budget.addressState,
+              roomLength: budget.roomLength,
+              roomWidth: budget.roomWidth,
+              roomHeight: budget.roomHeight,
+              hasGlassAndStones: budget.hasGlassAndStones,
+              technicalSpecs: budget.technicalSpecs,
               notes: budget.notes,
               items: items.map((item) => ({
                 description: item.description,

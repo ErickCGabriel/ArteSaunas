@@ -16,17 +16,36 @@ const itemSchema = z.object({
   unitPriceCents: z.number().int().nonnegative(),
 });
 
+const decimalField = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => {
+    if (!value) return null;
+    const normalized = Number.parseFloat(value.replace(",", "."));
+    return Number.isFinite(normalized) ? normalized : null;
+  });
+
 const budgetSchema = z.object({
   contactId: z.string().trim().min(1, "Selecione um cliente."),
   title: z.string().trim().min(1, "Informe um título para o orçamento."),
-  address: z.string().trim().optional(),
+  requesterName: z.string().trim().optional(),
+  requesterPhone: z.string().trim().optional(),
+  addressStreet: z.string().trim().optional(),
+  addressNumber: z.string().trim().optional(),
+  addressNeighborhood: z.string().trim().optional(),
+  addressCity: z.string().trim().optional(),
+  addressState: z.string().trim().optional(),
+  roomLength: decimalField,
+  roomWidth: decimalField,
+  roomHeight: decimalField,
+  hasGlassAndStones: z.enum(["sim", "nao", ""]).optional(),
+  technicalSpecs: z.string().trim().optional(),
   notes: z.string().trim().optional(),
   items: z
     .array(itemSchema)
     .min(1, "Adicione pelo menos um item ao orçamento."),
 });
-
-export type BudgetFormState = { error?: string; id?: string };
 
 function parseBudgetForm(formData: FormData) {
   let items: unknown;
@@ -42,11 +61,24 @@ function parseBudgetForm(formData: FormData) {
   return budgetSchema.safeParse({
     contactId: formData.get("contactId"),
     title: formData.get("title"),
-    address: formData.get("address") || undefined,
+    requesterName: formData.get("requesterName") || undefined,
+    requesterPhone: formData.get("requesterPhone") || undefined,
+    addressStreet: formData.get("addressStreet") || undefined,
+    addressNumber: formData.get("addressNumber") || undefined,
+    addressNeighborhood: formData.get("addressNeighborhood") || undefined,
+    addressCity: formData.get("addressCity") || undefined,
+    addressState: formData.get("addressState") || undefined,
+    roomLength: formData.get("roomLength") || undefined,
+    roomWidth: formData.get("roomWidth") || undefined,
+    roomHeight: formData.get("roomHeight") || undefined,
+    hasGlassAndStones: formData.get("hasGlassAndStones") || "",
+    technicalSpecs: formData.get("technicalSpecs") || undefined,
     notes: formData.get("notes") || undefined,
     items,
   });
 }
+
+export type BudgetFormState = { error?: string; id?: string };
 
 async function nextBudgetNumber(): Promise<string> {
   const year = new Date().getFullYear();
@@ -67,6 +99,29 @@ async function nextBudgetNumber(): Promise<string> {
   return `${prefix}${String(nextSeq).padStart(4, "0")}`;
 }
 
+function budgetFieldsFromData(data: Omit<z.infer<typeof budgetSchema>, "items">) {
+  return {
+    title: data.title,
+    contactId: data.contactId,
+    requesterName: data.requesterName || null,
+    requesterPhone: data.requesterPhone || null,
+    addressStreet: data.addressStreet || null,
+    addressNumber: data.addressNumber || null,
+    addressNeighborhood: data.addressNeighborhood || null,
+    addressCity: data.addressCity || null,
+    addressState: data.addressState || null,
+    roomLength: data.roomLength,
+    roomWidth: data.roomWidth,
+    roomHeight: data.roomHeight,
+    hasGlassAndStones:
+      data.hasGlassAndStones === "" || data.hasGlassAndStones === undefined
+        ? null
+        : data.hasGlassAndStones === "sim",
+    technicalSpecs: data.technicalSpecs || null,
+    notes: data.notes || null,
+  };
+}
+
 export async function createBudget(
   _prevState: BudgetFormState,
   formData: FormData
@@ -85,10 +140,7 @@ export async function createBudget(
     await tx.insert(budgets).values({
       id,
       number,
-      title: data.title,
-      contactId: data.contactId,
-      address: data.address || null,
-      notes: data.notes || null,
+      ...budgetFieldsFromData(data),
       createdById: user.id,
     });
 
@@ -125,10 +177,7 @@ export async function updateBudget(
     await tx
       .update(budgets)
       .set({
-        title: data.title,
-        contactId: data.contactId,
-        address: data.address || null,
-        notes: data.notes || null,
+        ...budgetFieldsFromData(data),
         updatedAt: new Date(),
       })
       .where(eq(budgets.id, id));

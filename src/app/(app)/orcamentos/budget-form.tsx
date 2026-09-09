@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2Icon, PaperclipIcon, XIcon } from "lucide-react";
+import { Loader2Icon, PaperclipIcon, UserIcon, XIcon } from "lucide-react";
 
 import { createBudget, updateBudget, uploadBudgetFile } from "./actions";
 import { BudgetItemsEditor, type BudgetItemInput } from "./budget-items-editor";
@@ -21,28 +21,59 @@ import {
 import { formatCentsToBRL } from "@/lib/currency";
 import { formatBytes } from "@/lib/bytes";
 
-type ContactOption = { id: string; name: string; address: string | null };
+type ContactOption = {
+  id: string;
+  name: string;
+  phone: string | null;
+  address: string | null;
+};
+
+type BudgetData = {
+  id: string;
+  title: string;
+  contactId: string;
+  requesterName: string | null;
+  requesterPhone: string | null;
+  addressStreet: string | null;
+  addressNumber: string | null;
+  addressNeighborhood: string | null;
+  addressCity: string | null;
+  addressState: string | null;
+  roomLength: number | null;
+  roomWidth: number | null;
+  roomHeight: number | null;
+  hasGlassAndStones: boolean | null;
+  technicalSpecs: string | null;
+  notes: string | null;
+  items: { description: string; quantity: number; unitPriceCents: number }[];
+};
+
+function numberToInput(value: number | null) {
+  return value === null ? "" : String(value).replace(".", ",");
+}
 
 export function BudgetForm({
   contacts,
   budget,
 }: {
   contacts: ContactOption[];
-  budget?: {
-    id: string;
-    title: string;
-    contactId: string;
-    address: string | null;
-    notes: string | null;
-    items: { description: string; quantity: number; unitPriceCents: number }[];
-  };
+  budget?: BudgetData;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [isPending, startTransition] = useTransition();
   const [contactId, setContactId] = useState(budget?.contactId ?? "");
-  const [address, setAddress] = useState(budget?.address ?? "");
-  const [addressTouched, setAddressTouched] = useState(Boolean(budget?.address));
+  const [addressStreet, setAddressStreet] = useState(budget?.addressStreet ?? "");
+  const [addressTouched, setAddressTouched] = useState(Boolean(budget?.addressStreet));
+  const [requesterName, setRequesterName] = useState(budget?.requesterName ?? "");
+  const [requesterPhone, setRequesterPhone] = useState(budget?.requesterPhone ?? "");
+  const [hasGlassAndStones, setHasGlassAndStones] = useState(
+    budget?.hasGlassAndStones === true
+      ? "sim"
+      : budget?.hasGlassAndStones === false
+        ? "nao"
+        : ""
+  );
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,8 +81,15 @@ export function BudgetForm({
     setContactId(nextContactId);
     if (!addressTouched) {
       const contact = contacts.find((c) => c.id === nextContactId);
-      if (contact?.address) setAddress(contact.address);
+      if (contact?.address) setAddressStreet(contact.address);
     }
+  }
+
+  function useClientAsRequester() {
+    const contact = contacts.find((c) => c.id === contactId);
+    if (!contact) return;
+    setRequesterName(contact.name);
+    setRequesterPhone(contact.phone ?? "");
   }
 
   const initialItems: BudgetItemInput[] | undefined = budget?.items.map(
@@ -115,6 +153,7 @@ export function BudgetForm({
   return (
     <form action={handleSubmit} className="flex flex-col gap-6">
       <input type="hidden" name="contactId" value={contactId} />
+      <input type="hidden" name="hasGlassAndStones" value={hasGlassAndStones} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
@@ -150,17 +189,115 @@ export function BudgetForm({
         </div>
       </div>
 
+      <div className="flex flex-col gap-2 rounded-lg border border-border p-4">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="requesterName">Solicitante</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!contactId}
+            onClick={useClientAsRequester}
+          >
+            <UserIcon className="size-3.5" />
+            Usar dados do cliente
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input
+            id="requesterName"
+            name="requesterName"
+            value={requesterName}
+            onChange={(e) => setRequesterName(e.target.value)}
+            placeholder="Nome de quem solicitou"
+          />
+          <Input
+            name="requesterPhone"
+            value={requesterPhone}
+            onChange={(e) => setRequesterPhone(e.target.value)}
+            placeholder="Telefone"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Preencha só se for diferente do cliente.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>Endereço da instalação</Label>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_140px]">
+          <Input
+            name="addressStreet"
+            value={addressStreet}
+            onChange={(e) => {
+              setAddressTouched(true);
+              setAddressStreet(e.target.value);
+            }}
+            placeholder="Rua / Avenida"
+          />
+          <Input name="addressNumber" defaultValue={budget?.addressNumber ?? ""} placeholder="Número" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_80px]">
+          <Input
+            name="addressNeighborhood"
+            defaultValue={budget?.addressNeighborhood ?? ""}
+            placeholder="Bairro"
+          />
+          <Input name="addressCity" defaultValue={budget?.addressCity ?? ""} placeholder="Cidade" />
+          <Input
+            name="addressState"
+            defaultValue={budget?.addressState ?? ""}
+            placeholder="UF"
+            maxLength={2}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>Dimensões do ambiente (metros)</Label>
+        <div className="grid grid-cols-3 gap-4 sm:max-w-md">
+          <Input
+            name="roomLength"
+            defaultValue={numberToInput(budget?.roomLength ?? null)}
+            inputMode="decimal"
+            placeholder="Compr."
+          />
+          <Input
+            name="roomWidth"
+            defaultValue={numberToInput(budget?.roomWidth ?? null)}
+            inputMode="decimal"
+            placeholder="Larg."
+          />
+          <Input
+            name="roomHeight"
+            defaultValue={numberToInput(budget?.roomHeight ?? null)}
+            inputMode="decimal"
+            placeholder="Alt."
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5 sm:w-64">
+        <Label htmlFor="glassStones-trigger">Projeto possui vidros e pedras?</Label>
+        <Select value={hasGlassAndStones} onValueChange={setHasGlassAndStones}>
+          <SelectTrigger id="glassStones-trigger">
+            <SelectValue placeholder="Não informado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="sim">Sim</SelectItem>
+            <SelectItem value="nao">Não</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="address">Endereço da instalação</Label>
-        <Input
-          id="address"
-          name="address"
-          value={address}
-          onChange={(e) => {
-            setAddressTouched(true);
-            setAddress(e.target.value);
-          }}
-          placeholder="Rua, número, bairro, cidade"
+        <Label htmlFor="technicalSpecs">Especificações técnicas</Label>
+        <Textarea
+          id="technicalSpecs"
+          name="technicalSpecs"
+          rows={6}
+          defaultValue={budget?.technicalSpecs ?? ""}
+          placeholder={"Uma especificação por linha, ex:\nRevestimento vertical em lambris de madeira perobinha\nIsolamento térmico atrás do revestimento\nForno de 6kw bifásico, painel smart wifi"}
         />
       </div>
 

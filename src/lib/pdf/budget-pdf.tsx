@@ -36,9 +36,15 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
+  twoCol: { flexDirection: "row", gap: 24 },
+  col: { flex: 1 },
   row: { flexDirection: "row", marginBottom: 3 },
   label: { width: 80, color: "#555" },
   value: { flex: 1 },
+  specsList: { marginTop: 4, gap: 2 },
+  specItem: { flexDirection: "row" },
+  specBullet: { width: 10, color: "#8a5a24" },
+  specText: { flex: 1, lineHeight: 1.3 },
   table: { marginTop: 4 },
   tableHeader: {
     flexDirection: "row",
@@ -77,6 +83,13 @@ const styles = StyleSheet.create({
     borderTop: "0.5 solid #ddd",
     paddingTop: 8,
   },
+  portfolioGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
+  portfolioImage: {
+    width: 160,
+    height: 120,
+    objectFit: "cover",
+    borderRadius: 2,
+  },
 });
 
 const STATUS_LABEL: Record<Budget["status"], string> = {
@@ -86,24 +99,73 @@ const STATUS_LABEL: Record<Budget["status"], string> = {
   recusado: "Recusado",
 };
 
+const decimalFormatter = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 function formatDate(date: Date | null) {
   if (!date) return "—";
   return new Intl.DateTimeFormat("pt-BR").format(date);
+}
+
+function formatRoomDimensions(budget: Budget) {
+  const { roomLength, roomWidth, roomHeight } = budget;
+  const parts = [roomLength, roomWidth, roomHeight].filter(
+    (v): v is number => v !== null
+  );
+  if (parts.length === 0) return null;
+
+  const dimensions = parts.map((v) => decimalFormatter.format(v)).join(" x ");
+  if (parts.length < 3) return `${dimensions} m`;
+
+  const product = roomLength! * roomWidth! * roomHeight!;
+  return `${dimensions} = ${decimalFormatter.format(product)} m²`;
+}
+
+function formatInstallAddress(budget: Budget) {
+  const { addressStreet, addressNumber, addressNeighborhood, addressCity, addressState } =
+    budget;
+  if (!addressStreet && !addressNeighborhood && !addressCity) return null;
+
+  const streetLine = [
+    addressStreet,
+    addressNumber ? `nº ${addressNumber}` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const cityLine = [
+    addressNeighborhood,
+    [addressCity, addressState].filter(Boolean).join(" - "),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return [streetLine, cityLine].filter(Boolean).join(" — ");
 }
 
 export function BudgetPdf({
   budget,
   items,
   contact,
+  portfolioImages,
 }: {
   budget: Budget;
   items: BudgetItem[];
   contact: Contact;
+  portfolioImages?: Buffer[];
 }) {
   const total = items.reduce(
     (sum, item) => sum + item.quantity * item.unitPriceCents,
     0
   );
+
+  const roomDimensions = formatRoomDimensions(budget);
+  const installAddress = formatInstallAddress(budget);
+  const specs = (budget.technicalSpecs ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   return (
     <Document
@@ -127,38 +189,78 @@ export function BudgetPdf({
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Cliente</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>Nome</Text>
-            <Text style={styles.value}>{contact.name}</Text>
+        <View style={[styles.section, styles.twoCol]}>
+          <View style={styles.col}>
+            <Text style={styles.sectionTitle}>Cliente</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Nome</Text>
+              <Text style={styles.value}>{contact.name}</Text>
+            </View>
+            {contact.phone && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Telefone</Text>
+                <Text style={styles.value}>{contact.phone}</Text>
+              </View>
+            )}
+            {contact.email && (
+              <View style={styles.row}>
+                <Text style={styles.label}>E-mail</Text>
+                <Text style={styles.value}>{contact.email}</Text>
+              </View>
+            )}
           </View>
-          {contact.phone && (
-            <View style={styles.row}>
-              <Text style={styles.label}>Telefone</Text>
-              <Text style={styles.value}>{contact.phone}</Text>
-            </View>
-          )}
-          {contact.email && (
-            <View style={styles.row}>
-              <Text style={styles.label}>E-mail</Text>
-              <Text style={styles.value}>{contact.email}</Text>
-            </View>
-          )}
-          {contact.address && (
-            <View style={styles.row}>
-              <Text style={styles.label}>Endereço</Text>
-              <Text style={styles.value}>{contact.address}</Text>
+
+          {(budget.requesterName || budget.requesterPhone) && (
+            <View style={styles.col}>
+              <Text style={styles.sectionTitle}>Solicitante</Text>
+              {budget.requesterName && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>Nome</Text>
+                  <Text style={styles.value}>{budget.requesterName}</Text>
+                </View>
+              )}
+              {budget.requesterPhone && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>Telefone</Text>
+                  <Text style={styles.value}>{budget.requesterPhone}</Text>
+                </View>
+              )}
             </View>
           )}
         </View>
 
+        {installAddress && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Endereço da instalação</Text>
+            <Text style={styles.value}>{installAddress}</Text>
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{budget.title}</Text>
-          {budget.address && (
+          {roomDimensions && (
             <View style={styles.row}>
-              <Text style={styles.label}>Local</Text>
-              <Text style={styles.value}>{budget.address}</Text>
+              <Text style={styles.label}>Tamanho</Text>
+              <Text style={styles.value}>{roomDimensions}</Text>
+            </View>
+          )}
+          {budget.hasGlassAndStones !== null && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Vidros/pedras</Text>
+              <Text style={styles.value}>
+                {budget.hasGlassAndStones ? "Sim" : "Não"}
+              </Text>
+            </View>
+          )}
+
+          {specs.length > 0 && (
+            <View style={styles.specsList}>
+              {specs.map((spec, index) => (
+                <View key={index} style={styles.specItem}>
+                  <Text style={styles.specBullet}>•</Text>
+                  <Text style={styles.specText}>{spec}</Text>
+                </View>
+              ))}
             </View>
           )}
 
@@ -201,6 +303,21 @@ export function BudgetPdf({
           automaticamente pelo sistema de gestão
         </Text>
       </Page>
+
+      {portfolioImages && portfolioImages.length > 0 && (
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.sectionTitle}>Portfólio — Nossos trabalhos</Text>
+          <View style={styles.portfolioGrid}>
+            {portfolioImages.map((buffer, index) => (
+              <Image key={index} src={buffer} style={styles.portfolioImage} />
+            ))}
+          </View>
+          <Text style={styles.footer}>
+            Arte Saunas · Orçamento {budget.number} · Documento gerado
+            automaticamente pelo sistema de gestão
+          </Text>
+        </Page>
+      )}
     </Document>
   );
 }

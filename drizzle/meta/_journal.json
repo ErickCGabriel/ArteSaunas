@@ -50,6 +50,20 @@
       "when": 1788981839284,
       "tag": "0006_lovely_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788984368888,
+      "tag": "0007_material_centennial",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788984378197,
+      "tag": "0008_tiny_venom",
+      "breakpoints": true
     }
   ]
 }

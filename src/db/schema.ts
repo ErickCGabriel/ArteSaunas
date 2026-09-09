@@ -64,10 +64,26 @@ export const budgets = pgTable(
     contactId: text("contact_id")
       .notNull()
       .references(() => contacts.id, { onDelete: "restrict" }),
+    // Solicitante — quem pediu o orçamento, nem sempre é o cliente (contato)
+    // vinculado acima.
+    requesterName: text("requester_name"),
+    requesterPhone: text("requester_phone"),
+    // Endereço da instalação, dividido — pode ser diferente do endereço
+    // cadastrado no contato (o cliente pode ter mais de um imóvel).
+    addressStreet: text("address_street"),
+    addressNumber: text("address_number"),
+    addressNeighborhood: text("address_neighborhood"),
+    addressCity: text("address_city"),
+    addressState: text("address_state"),
+    // Dimensões do ambiente, em metros.
+    roomLength: real("room_length"),
+    roomWidth: real("room_width"),
+    roomHeight: real("room_height"),
+    hasGlassAndStones: boolean("has_glass_and_stones"),
+    // Especificações técnicas em texto livre (uma por linha), tipo a lista
+    // de revestimento/isolamento/forno etc. que já usam no orçamento em Word.
+    technicalSpecs: text("technical_specs"),
     notes: text("notes"),
-    // Endereço da instalação — pode ser diferente do endereço cadastrado no
-    // contato (o cliente pode ter mais de um imóvel).
-    address: text("address"),
     createdById: text("created_by_id").references(() => users.id, {
       onDelete: "set null",
     }),
