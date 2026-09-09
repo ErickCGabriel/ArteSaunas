@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2Icon } from "lucide-react";
+import { Loader2Icon, PaperclipIcon, XIcon } from "lucide-react";
 
-import { createBudget, updateBudget } from "./actions";
+import { createBudget, updateBudget, uploadBudgetFile } from "./actions";
 import { BudgetItemsEditor, type BudgetItemInput } from "./budget-items-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCentsToBRL } from "@/lib/currency";
+import { formatBytes } from "@/lib/bytes";
 
 type ContactOption = { id: string; name: string; address: string | null };
 
@@ -42,6 +43,8 @@ export function BudgetForm({
   const [contactId, setContactId] = useState(budget?.contactId ?? "");
   const [address, setAddress] = useState(budget?.address ?? "");
   const [addressTouched, setAddressTouched] = useState(Boolean(budget?.address));
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleContactChange(nextContactId: string) {
     setContactId(nextContactId);
@@ -71,12 +74,42 @@ export function BudgetForm({
       }
 
       setError(undefined);
+
       if (budget) {
         toast.success("Orçamento atualizado.");
         router.push(`/orcamentos/${budget.id}`);
+        return;
       }
-      // A criação já redireciona via redirect() na própria action.
+
+      const newId = result.id!;
+      if (stagedFiles.length > 0) {
+        const failures: string[] = [];
+        for (const file of stagedFiles) {
+          const fileFormData = new FormData();
+          fileFormData.set("file", file);
+          const uploadResult = await uploadBudgetFile(newId, {}, fileFormData);
+          if (uploadResult.error) failures.push(file.name);
+        }
+        if (failures.length > 0) {
+          toast.error(`Orçamento criado, mas falha ao enviar: ${failures.join(", ")}`);
+        } else {
+          toast.success("Orçamento criado e arquivos enviados.");
+        }
+      } else {
+        toast.success("Orçamento criado.");
+      }
+      router.push(`/orcamentos/${newId}`);
     });
+  }
+
+  function handleFilesSelected(files: FileList | null) {
+    if (!files) return;
+    setStagedFiles((prev) => [...prev, ...Array.from(files)]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function removeStagedFile(index: number) {
+    setStagedFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
   return (
@@ -145,6 +178,55 @@ export function BudgetForm({
           placeholder="Observações internas ou condições do orçamento"
         />
       </div>
+
+      {!budget && (
+        <div className="flex flex-col gap-1.5">
+          <Label>Arquivos (opcional)</Label>
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => handleFilesSelected(e.target.files)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <PaperclipIcon className="size-4" />
+              Anexar arquivos
+            </Button>
+          </div>
+          {stagedFiles.length > 0 && (
+            <ul className="flex flex-col gap-2">
+              {stagedFiles.map((file, index) => (
+                <li
+                  key={`${file.name}-${index}`}
+                  className="flex items-center gap-3 rounded-lg border border-border p-3"
+                >
+                  <div className="flex-1 overflow-hidden">
+                    <p className="truncate text-sm font-medium">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatBytes(file.size)}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeStagedFile(index)}
+                  >
+                    <XIcon className="size-4" />
+                    <span className="sr-only">Remover</span>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {error && (
         <p className="text-sm text-destructive" role="alert">

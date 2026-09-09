@@ -4,7 +4,6 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { desc, eq, like } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { db } from "@/db";
 import { budgetFiles, budgetItems, budgets, type Budget } from "@/db/schema";
@@ -27,7 +26,7 @@ const budgetSchema = z.object({
     .min(1, "Adicione pelo menos um item ao orçamento."),
 });
 
-export type BudgetFormState = { error?: string };
+export type BudgetFormState = { error?: string; id?: string };
 
 function parseBudgetForm(formData: FormData) {
   let items: unknown;
@@ -106,7 +105,7 @@ export async function createBudget(
   });
 
   revalidatePath("/orcamentos");
-  redirect(`/orcamentos/${id}`);
+  return { id };
 }
 
 export async function updateBudget(

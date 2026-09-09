@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { APP_TIME_ZONE } from "@/lib/timezone";
+import { formatBytes } from "@/lib/bytes";
 
 export type AttachedFile = {
   id: string;
@@ -31,11 +32,6 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeStyle: "short",
 });
 
-function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 function FileTypeIcon({ mimeType }: { mimeType: string }) {
   if (mimeType.startsWith("image/")) return <ImageIcon className="size-5" />;
