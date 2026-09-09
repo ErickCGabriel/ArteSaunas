@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Novo orçamento — Arte Saunas" };
 
 export default async function NovoOrcamentoPage() {
   const contactList = await db
-    .select({ id: contacts.id, name: contacts.name })
+    .select({ id: contacts.id, name: contacts.name, address: contacts.address })
     .from(contacts)
     .orderBy(asc(contacts.name));
 

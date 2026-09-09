@@ -20,8 +20,8 @@ const itemSchema = z.object({
 const budgetSchema = z.object({
   contactId: z.string().trim().min(1, "Selecione um cliente."),
   title: z.string().trim().min(1, "Informe um título para o orçamento."),
+  address: z.string().trim().optional(),
   notes: z.string().trim().optional(),
-  validUntil: z.string().trim().optional(),
   items: z
     .array(itemSchema)
     .min(1, "Adicione pelo menos um item ao orçamento."),
@@ -43,8 +43,8 @@ function parseBudgetForm(formData: FormData) {
   return budgetSchema.safeParse({
     contactId: formData.get("contactId"),
     title: formData.get("title"),
+    address: formData.get("address") || undefined,
     notes: formData.get("notes") || undefined,
-    validUntil: formData.get("validUntil") || undefined,
     items,
   });
 }
@@ -88,8 +88,8 @@ export async function createBudget(
       number,
       title: data.title,
       contactId: data.contactId,
+      address: data.address || null,
       notes: data.notes || null,
-      validUntil: data.validUntil ? new Date(data.validUntil) : null,
       createdById: user.id,
     });
 
@@ -128,8 +128,8 @@ export async function updateBudget(
       .set({
         title: data.title,
         contactId: data.contactId,
+        address: data.address || null,
         notes: data.notes || null,
-        validUntil: data.validUntil ? new Date(data.validUntil) : null,
         updatedAt: new Date(),
       })
       .where(eq(budgets.id, id));

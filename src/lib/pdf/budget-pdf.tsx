@@ -155,10 +155,10 @@ export function BudgetPdf({
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{budget.title}</Text>
-          {budget.validUntil && (
+          {budget.address && (
             <View style={styles.row}>
-              <Text style={styles.label}>Válido até</Text>
-              <Text style={styles.value}>{formatDate(budget.validUntil)}</Text>
+              <Text style={styles.label}>Local</Text>
+              <Text style={styles.value}>{budget.address}</Text>
             </View>
           )}
 

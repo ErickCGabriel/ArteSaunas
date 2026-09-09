@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { formatCentsToBRL } from "@/lib/currency";
 
-type ContactOption = { id: string; name: string };
+type ContactOption = { id: string; name: string; address: string | null };
 
 export function BudgetForm({
   contacts,
@@ -31,8 +31,8 @@ export function BudgetForm({
     id: string;
     title: string;
     contactId: string;
+    address: string | null;
     notes: string | null;
-    validUntil: number | null;
     items: { description: string; quantity: number; unitPriceCents: number }[];
   };
 }) {
@@ -40,6 +40,16 @@ export function BudgetForm({
   const [error, setError] = useState<string>();
   const [isPending, startTransition] = useTransition();
   const [contactId, setContactId] = useState(budget?.contactId ?? "");
+  const [address, setAddress] = useState(budget?.address ?? "");
+  const [addressTouched, setAddressTouched] = useState(Boolean(budget?.address));
+
+  function handleContactChange(nextContactId: string) {
+    setContactId(nextContactId);
+    if (!addressTouched) {
+      const contact = contacts.find((c) => c.id === nextContactId);
+      if (contact?.address) setAddress(contact.address);
+    }
+  }
 
   const initialItems: BudgetItemInput[] | undefined = budget?.items.map(
     (item) => ({
@@ -76,7 +86,7 @@ export function BudgetForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="contactId-trigger">Cliente *</Label>
-          <Select value={contactId} onValueChange={setContactId}>
+          <Select value={contactId} onValueChange={handleContactChange}>
             <SelectTrigger id="contactId-trigger">
               <SelectValue placeholder="Selecione um cliente" />
             </SelectTrigger>
@@ -107,17 +117,17 @@ export function BudgetForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5 sm:w-64">
-        <Label htmlFor="validUntil">Válido até</Label>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="address">Endereço da instalação</Label>
         <Input
-          id="validUntil"
-          name="validUntil"
-          type="date"
-          defaultValue={
-            budget?.validUntil
-              ? new Date(budget.validUntil).toISOString().slice(0, 10)
-              : undefined
-          }
+          id="address"
+          name="address"
+          value={address}
+          onChange={(e) => {
+            setAddressTouched(true);
+            setAddress(e.target.value);
+          }}
+          placeholder="Rua, número, bairro, cidade"
         />
       </div>
 

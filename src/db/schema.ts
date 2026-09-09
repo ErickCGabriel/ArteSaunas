@@ -65,7 +65,9 @@ export const budgets = pgTable(
       .notNull()
       .references(() => contacts.id, { onDelete: "restrict" }),
     notes: text("notes"),
-    validUntil: timestamp("valid_until", { withTimezone: true }),
+    // Endereço da instalação — pode ser diferente do endereço cadastrado no
+    // contato (o cliente pode ter mais de um imóvel).
+    address: text("address"),
     createdById: text("created_by_id").references(() => users.id, {
       onDelete: "set null",
     }),

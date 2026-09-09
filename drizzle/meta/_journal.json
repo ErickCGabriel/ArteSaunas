@@ -36,6 +36,20 @@
       "when": 1788980801301,
       "tag": "0004_shallow_saracen",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788981830119,
+      "tag": "0005_peaceful_trish_tilby",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788981839284,
+      "tag": "0006_lovely_swordsman",
+      "breakpoints": true
     }
   ]
 }
