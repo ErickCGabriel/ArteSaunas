@@ -32,7 +32,7 @@ export default async function DashboardPage() {
       .from(budgets)
       .leftJoin(contacts, eq(contacts.id, budgets.contactId))
       .leftJoin(budgetItems, eq(budgetItems.budgetId, budgets.id))
-      .groupBy(budgets.id)
+      .groupBy(budgets.id, contacts.name)
       .orderBy(desc(budgets.createdAt))
       .limit(5),
   ]);
