@@ -4,7 +4,7 @@ import { asc, desc, eq, sql } from "drizzle-orm";
 import { PlusIcon } from "lucide-react";
 
 import { db } from "@/db";
-import { budgetItems, budgets, contacts, invoices } from "@/db/schema";
+import { budgetItems, budgets, contacts, invoices, users } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -29,11 +29,12 @@ export default async function NotasFiscaisPage({
 }) {
   const { novo } = await searchParams;
 
-  const [rows, budgetOptions] = await Promise.all([
+  const [rows, contactList, budgetOptions] = await Promise.all([
     db
       .select({
         id: invoices.id,
         number: invoices.number,
+        contactId: invoices.contactId,
         budgetId: invoices.budgetId,
         issueDate: invoices.issueDate,
         totalCents: invoices.totalCents,
@@ -41,16 +42,20 @@ export default async function NotasFiscaisPage({
         notes: invoices.notes,
         budgetNumber: budgets.number,
         contactName: contacts.name,
+        createdByName: users.name,
       })
       .from(invoices)
+      .leftJoin(contacts, eq(contacts.id, invoices.contactId))
       .leftJoin(budgets, eq(budgets.id, invoices.budgetId))
-      .leftJoin(contacts, eq(contacts.id, budgets.contactId))
+      .leftJoin(users, eq(users.id, invoices.createdById))
       .orderBy(desc(invoices.issueDate)),
+    db.select({ id: contacts.id, name: contacts.name }).from(contacts).orderBy(asc(contacts.name)),
     db
       .select({
         id: budgets.id,
         number: budgets.number,
         title: budgets.title,
+        contactId: budgets.contactId,
         contactName: contacts.name,
         totalCents: sql<number>`coalesce(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0)`,
       })
@@ -65,6 +70,7 @@ export default async function NotasFiscaisPage({
     id: b.id,
     number: b.number,
     title: b.title,
+    contactId: b.contactId,
     contactName: b.contactName,
     totalCents: Number(b.totalCents ?? 0),
   }));
@@ -80,10 +86,11 @@ export default async function NotasFiscaisPage({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Notas Fiscais</h1>
           <p className="text-muted-foreground">
-            Registro interno das notas fiscais emitidas, vinculadas aos orçamentos.
+            Registro interno das notas fiscais emitidas, vinculadas aos clientes.
           </p>
         </div>
         <InvoiceFormDialog
+          contacts={contactList}
           budgets={budgetOptionList}
           defaultBudgetId={novo}
           defaultOpen={Boolean(novo)}
@@ -112,6 +119,7 @@ export default async function NotasFiscaisPage({
                   <TableHead>Emissão</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Emitida por</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -143,8 +151,11 @@ export default async function NotasFiscaisPage({
                     <TableCell>
                       <InvoiceStatusBadge status={row.status} />
                     </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {row.createdByName ?? "—"}
+                    </TableCell>
                     <TableCell>
-                      <InvoiceRowMenu invoice={row} budgets={budgetOptionList} />
+                      <InvoiceRowMenu invoice={row} contacts={contactList} budgets={budgetOptionList} />
                     </TableCell>
                   </TableRow>
                 ))}

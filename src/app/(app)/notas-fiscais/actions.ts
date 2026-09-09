@@ -14,18 +14,20 @@ import { putInvoiceFile, removeInvoiceFile } from "@/lib/storage";
 
 const invoiceSchema = z.object({
   number: z.string().trim().min(1, "Informe o número da nota fiscal."),
-  budgetId: z.string().trim().min(1, "Selecione o orçamento relacionado."),
+  contactId: z.string().trim().min(1, "Selecione o cliente."),
+  budgetId: z.string().trim().optional(),
   issueDate: z.string().min(1, "Informe a data de emissão."),
   total: z.string().min(1, "Informe o valor."),
   notes: z.string().trim().optional(),
 });
 
-export type InvoiceFormState = { error?: string };
+export type InvoiceFormState = { error?: string; id?: string };
 
 function parseInvoiceForm(formData: FormData) {
   return invoiceSchema.safeParse({
     number: formData.get("number"),
-    budgetId: formData.get("budgetId"),
+    contactId: formData.get("contactId"),
+    budgetId: formData.get("budgetId") || undefined,
     issueDate: formData.get("issueDate"),
     total: formData.get("total"),
     notes: formData.get("notes") || undefined,
@@ -59,10 +61,12 @@ export async function createInvoice(
     return { error: "Já existe uma nota fiscal com esse número." };
   }
 
+  const id = nanoid();
   await db.insert(invoices).values({
-    id: nanoid(),
+    id,
     number: parsed.data.number,
-    budgetId: parsed.data.budgetId,
+    contactId: parsed.data.contactId,
+    budgetId: parsed.data.budgetId || null,
     issueDate: localDateTimeToUTC(parsed.data.issueDate, "12:00"),
     totalCents: parseCurrencyToCents(parsed.data.total),
     notes: parsed.data.notes || null,
@@ -70,7 +74,7 @@ export async function createInvoice(
   });
 
   revalidatePath("/notas-fiscais");
-  return {};
+  return { id };
 }
 
 export async function updateInvoice(
@@ -92,7 +96,8 @@ export async function updateInvoice(
     .update(invoices)
     .set({
       number: parsed.data.number,
-      budgetId: parsed.data.budgetId,
+      contactId: parsed.data.contactId,
+      budgetId: parsed.data.budgetId || null,
       issueDate: localDateTimeToUTC(parsed.data.issueDate, "12:00"),
       totalCents: parseCurrencyToCents(parsed.data.total),
       notes: parsed.data.notes || null,

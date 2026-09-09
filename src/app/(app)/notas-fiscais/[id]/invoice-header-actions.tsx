@@ -11,10 +11,13 @@ import { InvoiceFormDialog } from "../invoice-form-dialog";
 import { deleteInvoice, updateInvoiceStatus } from "../actions";
 import type { Invoice } from "@/db/schema";
 
+type ContactOption = { id: string; name: string };
+
 type BudgetOption = {
   id: string;
   number: string;
   title: string;
+  contactId: string;
   contactName: string | null;
   totalCents: number;
 };
@@ -22,7 +25,8 @@ type BudgetOption = {
 type InvoiceData = {
   id: string;
   number: string;
-  budgetId: string;
+  contactId: string;
+  budgetId: string | null;
   issueDate: Date;
   totalCents: number;
   notes: string | null;
@@ -31,10 +35,12 @@ type InvoiceData = {
 export function InvoiceHeaderActions({
   invoice,
   status,
+  contacts,
   budgets,
 }: {
   invoice: InvoiceData;
   status: Invoice["status"];
+  contacts: ContactOption[];
   budgets: BudgetOption[];
 }) {
   const router = useRouter();
@@ -56,6 +62,7 @@ export function InvoiceHeaderActions({
     <div className="flex flex-wrap items-center gap-2">
       <InvoiceFormDialog
         invoice={invoice}
+        contacts={contacts}
         budgets={budgets}
         trigger={
           <Button variant="outline">

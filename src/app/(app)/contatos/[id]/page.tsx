@@ -49,8 +49,7 @@ export default async function ContatoDetailPage({
         status: invoices.status,
       })
       .from(invoices)
-      .innerJoin(budgets, eq(budgets.id, invoices.budgetId))
-      .where(eq(budgets.contactId, id))
+      .where(eq(invoices.contactId, id))
       .orderBy(desc(invoices.issueDate)),
     db
       .select()

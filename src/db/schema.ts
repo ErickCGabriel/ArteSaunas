@@ -162,9 +162,14 @@ export const invoices = pgTable(
     // Número da nota fiscal emitida no sistema fiscal real da empresa —
     // digitado manualmente, nunca gerado por aqui.
     number: text("number").notNull().unique(),
-    budgetId: text("budget_id")
+    contactId: text("contact_id")
       .notNull()
-      .references(() => budgets.id, { onDelete: "restrict" }),
+      .references(() => contacts.id, { onDelete: "restrict" }),
+    // Orçamento de origem — opcional, nem toda nota fiscal vem de um
+    // orçamento registrado no sistema.
+    budgetId: text("budget_id").references(() => budgets.id, {
+      onDelete: "set null",
+    }),
     issueDate: timestamp("issue_date", { withTimezone: true }).notNull(),
     totalCents: integer("total_cents").notNull().default(0),
     status: text("status", { enum: ["emitida", "cancelada"] })
@@ -177,6 +182,7 @@ export const invoices = pgTable(
     ...timestamps,
   },
   (table) => [
+    index("invoices_contact_idx").on(table.contactId),
     index("invoices_budget_idx").on(table.budgetId),
     index("invoices_status_idx").on(table.status),
   ]

@@ -17,10 +17,13 @@ import { InvoiceFormDialog } from "./invoice-form-dialog";
 import { deleteInvoice, updateInvoiceStatus } from "./actions";
 import type { Invoice } from "@/db/schema";
 
+type ContactOption = { id: string; name: string };
+
 type BudgetOption = {
   id: string;
   number: string;
   title: string;
+  contactId: string;
   contactName: string | null;
   totalCents: number;
 };
@@ -28,7 +31,8 @@ type BudgetOption = {
 type InvoiceData = {
   id: string;
   number: string;
-  budgetId: string;
+  contactId: string;
+  budgetId: string | null;
   issueDate: Date;
   totalCents: number;
   notes: string | null;
@@ -37,9 +41,11 @@ type InvoiceData = {
 
 export function InvoiceRowMenu({
   invoice,
+  contacts,
   budgets,
 }: {
   invoice: InvoiceData;
+  contacts: ContactOption[];
   budgets: BudgetOption[];
 }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -86,6 +92,7 @@ export function InvoiceRowMenu({
 
       <InvoiceFormDialog
         invoice={invoice}
+        contacts={contacts}
         budgets={budgets}
         open={editOpen}
         onOpenChange={setEditOpen}

@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { asc, desc, eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { FileTextIcon } from "lucide-react";
+import { FileTextIcon, UserIcon } from "lucide-react";
 
 import { db } from "@/db";
-import { budgetItems, budgets, contacts, invoiceFiles, invoices } from "@/db/schema";
+import { budgetItems, budgets, contacts, invoiceFiles, invoices, users } from "@/db/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
 import { formatCentsToBRL } from "@/lib/currency";
@@ -24,29 +24,34 @@ export default async function NotaFiscalDetailPage({
   const invoice = await db.select().from(invoices).where(eq(invoices.id, id)).then((rows) => rows[0]);
   if (!invoice) notFound();
 
-  const [budget, files, budgetOptions] = await Promise.all([
-    db
-      .select({
-        id: budgets.id,
-        number: budgets.number,
-        title: budgets.title,
-        contactId: contacts.id,
-        contactName: contacts.name,
-      })
-      .from(budgets)
-      .leftJoin(contacts, eq(contacts.id, budgets.contactId))
-      .where(eq(budgets.id, invoice.budgetId))
-      .then((rows) => rows[0]),
+  const [client, createdBy, budget, files, contactList, budgetOptions] = await Promise.all([
+    db.select().from(contacts).where(eq(contacts.id, invoice.contactId)).then((rows) => rows[0]),
+    invoice.createdById
+      ? db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, invoice.createdById))
+          .then((rows) => rows[0])
+      : Promise.resolve(undefined),
+    invoice.budgetId
+      ? db
+          .select({ id: budgets.id, number: budgets.number, title: budgets.title })
+          .from(budgets)
+          .where(eq(budgets.id, invoice.budgetId))
+          .then((rows) => rows[0])
+      : Promise.resolve(undefined),
     db
       .select()
       .from(invoiceFiles)
       .where(eq(invoiceFiles.invoiceId, id))
       .orderBy(desc(invoiceFiles.createdAt)),
+    db.select({ id: contacts.id, name: contacts.name }).from(contacts).orderBy(asc(contacts.name)),
     db
       .select({
         id: budgets.id,
         number: budgets.number,
         title: budgets.title,
+        contactId: budgets.contactId,
         contactName: contacts.name,
         totalCents: sql<number>`coalesce(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0)`,
       })
@@ -61,6 +66,7 @@ export default async function NotaFiscalDetailPage({
     id: b.id,
     number: b.number,
     title: b.title,
+    contactId: b.contactId,
     contactName: b.contactName,
     totalCents: Number(b.totalCents ?? 0),
   }));
@@ -77,7 +83,12 @@ export default async function NotaFiscalDetailPage({
           <p className="text-sm text-muted-foreground">Nota fiscal</p>
           <h1 className="text-2xl font-semibold tracking-tight">{invoice.number}</h1>
         </div>
-        <InvoiceHeaderActions invoice={invoice} status={invoice.status} budgets={budgetOptionList} />
+        <InvoiceHeaderActions
+          invoice={invoice}
+          status={invoice.status}
+          contacts={contactList}
+          budgets={budgetOptionList}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -98,6 +109,12 @@ export default async function NotaFiscalDetailPage({
               <p className="text-muted-foreground">Valor</p>
               <p className="font-medium">{formatCentsToBRL(invoice.totalCents)}</p>
             </div>
+            {createdBy && (
+              <div>
+                <p className="text-muted-foreground">Emitida por</p>
+                <p>{createdBy.name}</p>
+              </div>
+            )}
             {invoice.notes && (
               <div>
                 <p className="text-muted-foreground">Observações</p>
@@ -109,32 +126,43 @@ export default async function NotaFiscalDetailPage({
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Orçamento relacionado</CardTitle>
+            <CardTitle className="text-base">Cliente e orçamento</CardTitle>
           </CardHeader>
-          <CardContent>
-            {budget ? (
-              <div className="flex items-center justify-between gap-3 rounded-md px-2 py-2 text-sm">
-                <Link
-                  href={`/orcamentos/${budget.id}`}
-                  className="flex items-center gap-2 hover:underline"
-                >
-                  <FileTextIcon className="size-4 text-muted-foreground" />
-                  <div className="flex flex-col">
-                    <span className="font-medium">{budget.title}</span>
-                    <span className="text-muted-foreground">{budget.number}</span>
-                  </div>
-                </Link>
-                {budget.contactId && (
-                  <Link
-                    href={`/contatos/${budget.contactId}`}
-                    className="text-muted-foreground hover:text-foreground hover:underline"
-                  >
-                    {budget.contactName}
-                  </Link>
-                )}
-              </div>
+          <CardContent className="flex flex-col gap-1">
+            {client ? (
+              <Link
+                href={`/contatos/${client.id}`}
+                className="flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent/60"
+              >
+                <UserIcon className="size-4 text-muted-foreground" />
+                <div className="flex flex-col">
+                  <span className="font-medium">{client.name}</span>
+                  {client.phone && (
+                    <span className="text-muted-foreground">{client.phone}</span>
+                  )}
+                </div>
+              </Link>
             ) : (
-              <p className="text-sm text-muted-foreground">Orçamento não encontrado.</p>
+              <p className="px-2 py-2 text-sm text-muted-foreground">
+                Cliente não encontrado.
+              </p>
+            )}
+
+            {budget ? (
+              <Link
+                href={`/orcamentos/${budget.id}`}
+                className="flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent/60"
+              >
+                <FileTextIcon className="size-4 text-muted-foreground" />
+                <div className="flex flex-col">
+                  <span className="font-medium">{budget.title}</span>
+                  <span className="text-muted-foreground">{budget.number}</span>
+                </div>
+              </Link>
+            ) : (
+              <p className="px-2 py-2 text-sm text-muted-foreground">
+                Sem orçamento de origem vinculado.
+              </p>
             )}
           </CardContent>
         </Card>
