@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Deployment target is a resource-constrained LXC container with no
-  // Docker — standalone output keeps the copied node_modules subset (and
-  // therefore disk/RAM footprint) to only what the server actually needs.
-  output: "standalone",
+  // `output: "standalone"` (used for the self-hosted Proxmox deploy) is
+  // deliberately NOT set here — it conflicts with Vercel's own build/
+  // packaging pipeline (breaks with an ENOENT on next-server.js.nft.json).
+  // Re-add it in "Migrando de volta pro Proxmox" (see README) when this
+  // temporary Vercel bridge ends.
   experimental: {
     serverActions: {
       // Default is 1MB, too small for contact file uploads (photos/plans).
