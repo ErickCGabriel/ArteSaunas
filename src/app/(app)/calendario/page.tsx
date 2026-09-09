@@ -5,13 +5,16 @@ import { CalendarIcon, PlusIcon } from "lucide-react";
 import { db } from "@/db";
 import { budgets, contacts } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
-import { listUpcomingCalendarEvents } from "@/lib/google/calendar";
+import { listCalendarEventsInRange, type CalendarEventDto } from "@/lib/google/calendar";
 import { getGoogleAccountEmail, isGoogleConnected } from "@/lib/google/settings";
+import { APP_TIME_ZONE, toLocalDateKey } from "@/lib/timezone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EventFormDialog } from "./event-form-dialog";
 import { EventRow } from "./event-row";
 import { GoogleConnectionCard } from "./google-connection-card";
+import { CalendarGrid } from "./calendar-grid";
+import { buildMonthGrid, parseMonthParam } from "./date-grid";
 
 export const metadata: Metadata = { title: "Calendário — Arte Saunas" };
 
@@ -21,25 +24,54 @@ const ERROR_MESSAGES: Record<string, string> = {
   exchange: "Não foi possível concluir a conexão com o Google. Tente novamente.",
 };
 
+function groupEventsByDay(events: CalendarEventDto[]) {
+  const map = new Map<string, CalendarEventDto[]>();
+  for (const event of events) {
+    const key = toLocalDateKey(event.startAt);
+    const list = map.get(key);
+    if (list) list.push(event);
+    else map.set(key, [event]);
+  }
+  return map;
+}
+
 export default async function CalendarioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ google_connected?: string; google_error?: string }>;
+  searchParams: Promise<{
+    google_connected?: string;
+    google_error?: string;
+    month?: string;
+    day?: string;
+  }>;
 }) {
   const user = await requireUser();
-  const { google_connected, google_error } = await searchParams;
+  const { google_connected, google_error, month, day } = await searchParams;
   const connected = await isGoogleConnected();
 
   const [contactList, budgetList] = await Promise.all([
-    db.select({ id: contacts.id, name: contacts.name }).from(contacts).orderBy(asc(contacts.name)),
+    db
+      .select({ id: contacts.id, name: contacts.name, address: contacts.address })
+      .from(contacts)
+      .orderBy(asc(contacts.name)),
     db.select({ id: budgets.id, number: budgets.number, title: budgets.title }).from(budgets).orderBy(asc(budgets.number)),
   ]);
 
-  const contactOptions = contactList.map((c) => ({ id: c.id, label: c.name }));
+  const contactOptions = contactList.map((c) => ({ id: c.id, label: c.name, address: c.address }));
   const budgetOptions = budgetList.map((b) => ({
     id: b.id,
     label: `${b.number} — ${b.title}`,
   }));
+
+  const todayKey = toLocalDateKey(new Date());
+  const { year, monthIndex } = parseMonthParam(month, todayKey);
+  const grid = buildMonthGrid(year, monthIndex);
+  const selectedDayKey =
+    day && grid.weeks.flat().includes(day)
+      ? day
+      : grid.monthKey === todayKey.slice(0, 7)
+        ? todayKey
+        : grid.weeks[0][0];
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,6 +86,7 @@ export default async function CalendarioPage({
           <EventFormDialog
             contacts={contactOptions}
             budgets={budgetOptions}
+            defaultDate={selectedDayKey}
             trigger={
               <Button>
                 <PlusIcon className="size-4" />
@@ -112,24 +145,43 @@ export default async function CalendarioPage({
       )}
 
       {connected && (
-        <EventsList contactOptions={contactOptions} budgetOptions={budgetOptions} />
+        <CalendarBody
+          grid={grid}
+          todayKey={todayKey}
+          selectedDayKey={selectedDayKey}
+          contactOptions={contactOptions}
+          budgetOptions={budgetOptions}
+        />
       )}
     </div>
   );
 }
 
-async function EventsList({
+async function CalendarBody({
+  grid,
+  todayKey,
+  selectedDayKey,
   contactOptions,
   budgetOptions,
 }: {
-  contactOptions: { id: string; label: string }[];
+  grid: ReturnType<typeof buildMonthGrid>;
+  todayKey: string;
+  selectedDayKey: string;
+  contactOptions: { id: string; label: string; address: string | null }[];
   budgetOptions: { id: string; label: string }[];
 }) {
-  let events;
+  let eventsByDay = new Map<string, CalendarEventDto[]>();
+  let loadError = false;
+
   try {
-    events = await listUpcomingCalendarEvents();
+    const events = await listCalendarEventsInRange(grid.rangeStart, grid.rangeEnd);
+    eventsByDay = groupEventsByDay(events ?? []);
   } catch (error) {
     console.error("Falha ao buscar eventos do Google Calendar:", error);
+    loadError = true;
+  }
+
+  if (loadError) {
     return (
       <Card className="border-destructive/40 bg-destructive/10">
         <CardContent className="p-4 text-sm">
@@ -141,28 +193,44 @@ async function EventsList({
     );
   }
 
-  if (!events) return null;
-
-  if (events.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Nenhum evento agendado nos próximos 90 dias.
-        </CardContent>
-      </Card>
-    );
-  }
+  const eventCountByDay = new Map(
+    [...eventsByDay.entries()].map(([key, events]) => [key, events.length])
+  );
+  const selectedDayEvents = eventsByDay.get(selectedDayKey) ?? [];
+  const [selYear, selMonth, selDay] = selectedDayKey.split("-").map(Number);
+  const selectedDayLabel = new Date(Date.UTC(selYear, selMonth - 1, selDay, 12)).toLocaleDateString(
+    "pt-BR",
+    { timeZone: APP_TIME_ZONE, weekday: "long", day: "2-digit", month: "long" }
+  );
 
   return (
-    <div className="flex flex-col gap-3">
-      {events.map((event) => (
-        <EventRow
-          key={event.id}
-          event={event}
-          contacts={contactOptions}
-          budgets={budgetOptions}
-        />
-      ))}
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
+      <CalendarGrid
+        grid={grid}
+        todayKey={todayKey}
+        selectedDayKey={selectedDayKey}
+        eventCountByDay={eventCountByDay}
+      />
+
+      <div className="flex flex-col gap-3">
+        <p className="font-medium capitalize">{selectedDayLabel}</p>
+        {selectedDayEvents.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center text-sm text-muted-foreground">
+              Nenhum evento agendado para este dia.
+            </CardContent>
+          </Card>
+        ) : (
+          selectedDayEvents.map((event) => (
+            <EventRow
+              key={event.id}
+              event={event}
+              contacts={contactOptions}
+              budgets={budgetOptions}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 }

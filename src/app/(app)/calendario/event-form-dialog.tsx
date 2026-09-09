@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Loader2Icon } from "lucide-react";
 
 import { createEvent, updateEvent } from "./actions";
+import { toLocalDateKey, toLocalTimeKey } from "@/lib/timezone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,31 +27,25 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-type Option = { id: string; label: string };
+type Option = { id: string; label: string; address?: string | null };
 
 type EventData = {
   id: string;
   title: string;
   description: string | null;
+  address: string | null;
   startAt: Date;
   endAt: Date;
   contactId: string | null;
   budgetId: string | null;
 };
 
-function toDateInput(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function toTimeInput(date: Date) {
-  return date.toTimeString().slice(0, 5);
-}
-
 export function EventFormDialog({
   event,
   contacts,
   budgets,
   trigger,
+  defaultDate,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: {
@@ -58,6 +53,8 @@ export function EventFormDialog({
   contacts: Option[];
   budgets: Option[];
   trigger?: ReactNode;
+  /** Data ("YYYY-MM-DD") pré-selecionada ao criar um evento a partir de um dia do calendário. */
+  defaultDate?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -67,7 +64,16 @@ export function EventFormDialog({
   const [error, setError] = useState<string>();
   const [contactId, setContactId] = useState(event?.contactId ?? "");
   const [budgetId, setBudgetId] = useState(event?.budgetId ?? "");
+  const [address, setAddress] = useState(event?.address ?? "");
   const [isPending, startTransition] = useTransition();
+
+  function handleContactChange(nextContactId: string) {
+    setContactId(nextContactId);
+    if (!address) {
+      const contact = contacts.find((c) => c.id === nextContactId);
+      if (contact?.address) setAddress(contact.address);
+    }
+  }
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -126,7 +132,9 @@ export function EventFormDialog({
                 name="date"
                 type="date"
                 required
-                defaultValue={event ? toDateInput(event.startAt) : undefined}
+                defaultValue={
+                  event ? toLocalDateKey(event.startAt) : defaultDate
+                }
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -136,7 +144,7 @@ export function EventFormDialog({
                 name="startTime"
                 type="time"
                 required
-                defaultValue={event ? toTimeInput(event.startAt) : "09:00"}
+                defaultValue={event ? toLocalTimeKey(event.startAt) : "09:00"}
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -146,7 +154,7 @@ export function EventFormDialog({
                 name="endTime"
                 type="time"
                 required
-                defaultValue={event ? toTimeInput(event.endAt) : "10:00"}
+                defaultValue={event ? toLocalTimeKey(event.endAt) : "10:00"}
               />
             </div>
           </div>
@@ -154,7 +162,7 @@ export function EventFormDialog({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="contactId-trigger">Contato (opcional)</Label>
-              <Select value={contactId} onValueChange={setContactId}>
+              <Select value={contactId} onValueChange={handleContactChange}>
                 <SelectTrigger id="contactId-trigger">
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
@@ -182,6 +190,17 @@ export function EventFormDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="address">Endereço (opcional)</Label>
+            <Input
+              id="address"
+              name="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Rua, número, bairro, cidade"
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">

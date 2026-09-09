@@ -10,11 +10,13 @@ import {
   updateCalendarEvent,
 } from "@/lib/google/calendar";
 import { clearGoogleConnection } from "@/lib/google/settings";
+import { localDateTimeToUTC } from "@/lib/timezone";
 
 const eventSchema = z
   .object({
     title: z.string().trim().min(1, "Informe um título."),
     description: z.string().trim().optional(),
+    address: z.string().trim().optional(),
     date: z.string().min(1, "Informe a data."),
     startTime: z.string().min(1, "Informe o horário de início."),
     endTime: z.string().min(1, "Informe o horário de término."),
@@ -22,8 +24,8 @@ const eventSchema = z
     budgetId: z.string().optional(),
   })
   .transform((data, ctx) => {
-    const startAt = new Date(`${data.date}T${data.startTime}:00`);
-    const endAt = new Date(`${data.date}T${data.endTime}:00`);
+    const startAt = localDateTimeToUTC(data.date, data.startTime);
+    const endAt = localDateTimeToUTC(data.date, data.endTime);
 
     if (endAt <= startAt) {
       ctx.addIssue({
@@ -37,6 +39,7 @@ const eventSchema = z
     return {
       title: data.title,
       description: data.description,
+      address: data.address,
       startAt,
       endAt,
       contactId: data.contactId || undefined,
@@ -50,6 +53,7 @@ function parseEventForm(formData: FormData) {
   return eventSchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description") || undefined,
+    address: formData.get("address") || undefined,
     date: formData.get("date"),
     startTime: formData.get("startTime"),
     endTime: formData.get("endTime"),

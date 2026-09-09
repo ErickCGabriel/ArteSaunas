@@ -67,6 +67,7 @@ function getCalendarId() {
 export type CalendarEventInput = {
   title: string;
   description?: string;
+  address?: string;
   startAt: Date;
   endAt: Date;
   contactId?: string;
@@ -77,6 +78,7 @@ export type CalendarEventDto = {
   id: string;
   title: string;
   description: string | null;
+  address: string | null;
   startAt: Date;
   endAt: Date;
   contactId: string | null;
@@ -92,6 +94,7 @@ function toDto(event: calendar_v3.Schema$Event): CalendarEventDto {
     id: event.id!,
     title: event.summary ?? "(sem título)",
     description: event.description ?? null,
+    address: event.location ?? null,
     startAt: startAt ? new Date(startAt) : new Date(),
     endAt: endAt ? new Date(endAt) : new Date(),
     contactId: props.contactId ?? null,
@@ -105,6 +108,7 @@ function toRequestBody(
   return {
     summary: input.title,
     description: input.description || undefined,
+    location: input.address || undefined,
     start: { dateTime: input.startAt.toISOString(), timeZone: TIME_ZONE },
     end: { dateTime: input.endAt.toISOString(), timeZone: TIME_ZONE },
     extendedProperties: {
@@ -117,15 +121,14 @@ function toRequestBody(
   };
 }
 
-export async function listUpcomingCalendarEvents(
-  daysAhead = 90
+export async function listCalendarEventsInRange(
+  timeMin: Date,
+  timeMax: Date
 ): Promise<CalendarEventDto[] | null> {
   const client = await getAuthorizedClient();
   if (!client) return null;
 
   const calendar = google.calendar({ version: "v3", auth: client });
-  const timeMin = new Date();
-  const timeMax = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000);
 
   const { data } = await calendar.events.list({
     calendarId: getCalendarId(),
