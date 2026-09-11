@@ -13,6 +13,8 @@ import type { Invoice } from "@/db/schema";
 
 type ContactOption = { id: string; name: string };
 
+type UserOption = { id: string; name: string };
+
 type BudgetOption = {
   id: string;
   number: string;
@@ -30,6 +32,7 @@ type InvoiceData = {
   issueDate: Date;
   totalCents: number;
   notes: string | null;
+  assignedToId: string | null;
 };
 
 export function InvoiceHeaderActions({
@@ -37,12 +40,16 @@ export function InvoiceHeaderActions({
   status,
   contacts,
   budgets,
+  users,
+  currentUserId,
   canDelete,
 }: {
   invoice: InvoiceData;
   status: Invoice["status"];
   contacts: ContactOption[];
   budgets: BudgetOption[];
+  users: UserOption[];
+  currentUserId: string;
   canDelete: boolean;
 }) {
   const router = useRouter();
@@ -66,6 +73,8 @@ export function InvoiceHeaderActions({
         invoice={invoice}
         contacts={contacts}
         budgets={budgets}
+        users={users}
+        currentUserId={currentUserId}
         trigger={
           <Button variant="outline">
             <PencilIcon className="size-4" />

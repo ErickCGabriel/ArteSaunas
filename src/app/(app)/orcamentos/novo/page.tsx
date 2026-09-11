@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { contacts, itemCatalog } from "@/db/schema";
+import { contacts, itemCatalog, users } from "@/db/schema";
+import { requireUser } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetForm } from "../budget-form";
 
 export const metadata: Metadata = { title: "Novo orçamento — Arte Saunas" };
 
 export default async function NovoOrcamentoPage() {
-  const [contactList, catalogItems] = await Promise.all([
+  const currentUser = await requireUser();
+
+  const [contactList, catalogItems, userList] = await Promise.all([
     db
       .select({
         id: contacts.id,
@@ -27,6 +30,11 @@ export default async function NovoOrcamentoPage() {
       })
       .from(itemCatalog)
       .orderBy(asc(itemCatalog.description)),
+    db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(eq(users.active, true))
+      .orderBy(asc(users.name)),
   ]);
 
   return (
@@ -45,7 +53,12 @@ export default async function NovoOrcamentoPage() {
           <CardTitle className="text-base">Detalhes</CardTitle>
         </CardHeader>
         <CardContent>
-          <BudgetForm contacts={contactList} catalogItems={catalogItems} />
+          <BudgetForm
+            contacts={contactList}
+            catalogItems={catalogItems}
+            users={userList}
+            currentUserId={currentUser.id}
+          />
         </CardContent>
       </Card>
     </div>

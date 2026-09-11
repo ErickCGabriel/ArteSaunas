@@ -91,11 +91,17 @@ export const budgets = pgTable(
     createdById: text("created_by_id").references(() => users.id, {
       onDelete: "set null",
     }),
+    // Quem da equipe está cuidando desse orçamento — nem sempre é quem
+    // criou. Editável, começa com quem cria o orçamento.
+    assignedToId: text("assigned_to_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     ...timestamps,
   },
   (table) => [
     index("budgets_contact_idx").on(table.contactId),
     index("budgets_status_idx").on(table.status),
+    index("budgets_assigned_to_idx").on(table.assignedToId),
   ]
 );
 
@@ -183,12 +189,17 @@ export const invoices = pgTable(
     createdById: text("created_by_id").references(() => users.id, {
       onDelete: "set null",
     }),
+    // Quem da equipe está cuidando dessa nota — nem sempre é quem registrou.
+    assignedToId: text("assigned_to_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     ...timestamps,
   },
   (table) => [
     index("invoices_contact_idx").on(table.contactId),
     index("invoices_budget_idx").on(table.budgetId),
     index("invoices_status_idx").on(table.status),
+    index("invoices_assigned_to_idx").on(table.assignedToId),
   ]
 );
 

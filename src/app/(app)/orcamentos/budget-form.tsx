@@ -32,6 +32,8 @@ type ContactOption = {
   address: string | null;
 };
 
+type UserOption = { id: string; name: string };
+
 type BudgetData = {
   id: string;
   title: string;
@@ -49,6 +51,7 @@ type BudgetData = {
   hasGlassAndStones: boolean | null;
   technicalSpecs: string | null;
   notes: string | null;
+  assignedToId: string | null;
   items: { description: string; quantity: number; unitPriceCents: number }[];
 };
 
@@ -59,16 +62,23 @@ function numberToInput(value: number | null) {
 export function BudgetForm({
   contacts,
   catalogItems,
+  users,
+  currentUserId,
   budget,
 }: {
   contacts: ContactOption[];
   catalogItems?: CatalogOption[];
+  users: UserOption[];
+  currentUserId: string;
   budget?: BudgetData;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [isPending, startTransition] = useTransition();
   const [contactId, setContactId] = useState(budget?.contactId ?? "");
+  const [assignedToId, setAssignedToId] = useState(
+    budget?.assignedToId ?? currentUserId
+  );
   const [addressStreet, setAddressStreet] = useState(budget?.addressStreet ?? "");
   const [addressTouched, setAddressTouched] = useState(Boolean(budget?.addressStreet));
   const [requesterName, setRequesterName] = useState(budget?.requesterName ?? "");
@@ -160,6 +170,7 @@ export function BudgetForm({
     <form action={handleSubmit} className="flex flex-col gap-6">
       <input type="hidden" name="contactId" value={contactId} />
       <input type="hidden" name="hasGlassAndStones" value={hasGlassAndStones} />
+      <input type="hidden" name="assignedToId" value={assignedToId} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
@@ -193,6 +204,22 @@ export function BudgetForm({
             placeholder="Ex: Sauna a vapor residencial"
           />
         </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5 sm:w-64">
+        <Label htmlFor="assignedToId-trigger">Responsável</Label>
+        <Select value={assignedToId} onValueChange={setAssignedToId}>
+          <SelectTrigger id="assignedToId-trigger">
+            <SelectValue placeholder="Selecione um responsável" />
+          </SelectTrigger>
+          <SelectContent>
+            {users.map((u) => (
+              <SelectItem key={u.id} value={u.id}>
+                {u.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-2 rounded-lg border border-border p-4">

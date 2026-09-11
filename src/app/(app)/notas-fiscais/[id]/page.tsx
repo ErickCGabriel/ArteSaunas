@@ -27,13 +27,20 @@ export default async function NotaFiscalDetailPage({
   const invoice = await db.select().from(invoices).where(eq(invoices.id, id)).then((rows) => rows[0]);
   if (!invoice) notFound();
 
-  const [client, createdBy, budget, files, contactList, budgetOptions] = await Promise.all([
+  const [client, createdBy, assignedTo, budget, files, contactList, budgetOptions, userList] = await Promise.all([
     db.select().from(contacts).where(eq(contacts.id, invoice.contactId)).then((rows) => rows[0]),
     invoice.createdById
       ? db
           .select({ name: users.name })
           .from(users)
           .where(eq(users.id, invoice.createdById))
+          .then((rows) => rows[0])
+      : Promise.resolve(undefined),
+    invoice.assignedToId
+      ? db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, invoice.assignedToId))
           .then((rows) => rows[0])
       : Promise.resolve(undefined),
     invoice.budgetId
@@ -63,6 +70,11 @@ export default async function NotaFiscalDetailPage({
       .leftJoin(budgetItems, eq(budgetItems.budgetId, budgets.id))
       .groupBy(budgets.id, contacts.name)
       .orderBy(asc(budgets.number)),
+    db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(eq(users.active, true))
+      .orderBy(asc(users.name)),
   ]);
 
   const budgetOptionList = budgetOptions.map((b) => ({
@@ -91,6 +103,8 @@ export default async function NotaFiscalDetailPage({
           status={invoice.status}
           contacts={contactList}
           budgets={budgetOptionList}
+          users={userList}
+          currentUserId={currentUser.id}
           canDelete={canDelete}
         />
       </div>
@@ -113,6 +127,12 @@ export default async function NotaFiscalDetailPage({
               <p className="text-muted-foreground">Valor</p>
               <p className="font-medium">{formatCentsToBRL(invoice.totalCents)}</p>
             </div>
+            {assignedTo && (
+              <div>
+                <p className="text-muted-foreground">Responsável</p>
+                <p>{assignedTo.name}</p>
+              </div>
+            )}
             {createdBy && (
               <div>
                 <p className="text-muted-foreground">Emitida por</p>

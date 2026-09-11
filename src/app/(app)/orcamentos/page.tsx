@@ -4,7 +4,8 @@ import { desc, eq, sql } from "drizzle-orm";
 import { PlusIcon } from "lucide-react";
 
 import { db } from "@/db";
-import { budgetItems, budgets, contacts } from "@/db/schema";
+import { budgetItems, budgets, contacts, users } from "@/db/schema";
+import { requireUser } from "@/lib/auth/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -16,11 +17,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { BudgetStatusBadge } from "@/components/budget-status-badge";
+import { MineFilterToggle } from "@/components/mine-filter-toggle";
 import { formatCentsToBRL } from "@/lib/currency";
 
 export const metadata: Metadata = { title: "Orçamentos — Arte Saunas" };
 
-export default async function OrcamentosPage() {
+export default async function OrcamentosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mine?: string }>;
+}) {
+  const currentUser = await requireUser();
+  const { mine: mineParam } = await searchParams;
+  const mine = mineParam === "1";
+
+  const assignedTo = users.name;
   const rows = await db
     .select({
       id: budgets.id,
@@ -29,12 +40,16 @@ export default async function OrcamentosPage() {
       status: budgets.status,
       createdAt: budgets.createdAt,
       contactName: contacts.name,
+      assignedToId: budgets.assignedToId,
+      assignedToName: assignedTo,
       total: sql<number>`coalesce(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0)`,
     })
     .from(budgets)
     .leftJoin(contacts, eq(contacts.id, budgets.contactId))
     .leftJoin(budgetItems, eq(budgetItems.budgetId, budgets.id))
-    .groupBy(budgets.id, contacts.name)
+    .leftJoin(users, eq(users.id, budgets.assignedToId))
+    .where(mine ? eq(budgets.assignedToId, currentUser.id) : undefined)
+    .groupBy(budgets.id, contacts.name, assignedTo)
     .orderBy(desc(budgets.createdAt));
 
   return (
@@ -48,12 +63,15 @@ export default async function OrcamentosPage() {
             Propostas de serviços e produtos para clientes.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/orcamentos/novo">
-            <PlusIcon className="size-4" />
-            Novo orçamento
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <MineFilterToggle mine={mine} basePath="/orcamentos" />
+          <Button asChild>
+            <Link href="/orcamentos/novo">
+              <PlusIcon className="size-4" />
+              Novo orçamento
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -69,6 +87,7 @@ export default async function OrcamentosPage() {
                   <TableHead>Número</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Título</TableHead>
+                  <TableHead>Responsável</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                 </TableRow>
@@ -92,6 +111,11 @@ export default async function OrcamentosPage() {
                     <TableCell>
                       <Link href={`/orcamentos/${row.id}`} className="block">
                         {row.title}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      <Link href={`/orcamentos/${row.id}`} className="block">
+                        {row.assignedToName ?? "—"}
                       </Link>
                     </TableCell>
                     <TableCell>

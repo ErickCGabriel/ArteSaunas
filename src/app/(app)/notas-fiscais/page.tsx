@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { asc, desc, eq, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { PlusIcon } from "lucide-react";
 
 import { db } from "@/db";
@@ -18,21 +19,30 @@ import {
 } from "@/components/ui/table";
 import { formatCentsToBRL } from "@/lib/currency";
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
+import { MineFilterToggle } from "@/components/mine-filter-toggle";
 import { InvoiceFormDialog } from "./invoice-form-dialog";
 import { InvoiceRowMenu } from "./invoice-row-menu";
 
 export const metadata: Metadata = { title: "Notas Fiscais — Arte Saunas" };
 
+const assignedUsers = alias(users, "assigned_users");
+
 export default async function NotasFiscaisPage({
   searchParams,
 }: {
-  searchParams: Promise<{ novo?: string }>;
+  searchParams: Promise<{ novo?: string; mine?: string }>;
 }) {
-  const { novo } = await searchParams;
+  const { novo, mine: mineParam } = await searchParams;
   const currentUser = await requireUser();
   const canDelete = currentUser.role === "admin" || currentUser.role === "gerente";
+  const mine = mineParam === "1";
 
-  const [rows, contactList, budgetOptions] = await Promise.all([
+  const [allUsers, rows, contactList, budgetOptions] = await Promise.all([
+    db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(eq(users.active, true))
+      .orderBy(asc(users.name)),
     db
       .select({
         id: invoices.id,
@@ -43,14 +53,18 @@ export default async function NotasFiscaisPage({
         totalCents: invoices.totalCents,
         status: invoices.status,
         notes: invoices.notes,
+        assignedToId: invoices.assignedToId,
         budgetNumber: budgets.number,
         contactName: contacts.name,
         createdByName: users.name,
+        assignedToName: assignedUsers.name,
       })
       .from(invoices)
       .leftJoin(contacts, eq(contacts.id, invoices.contactId))
       .leftJoin(budgets, eq(budgets.id, invoices.budgetId))
       .leftJoin(users, eq(users.id, invoices.createdById))
+      .leftJoin(assignedUsers, eq(assignedUsers.id, invoices.assignedToId))
+      .where(mine ? eq(invoices.assignedToId, currentUser.id) : undefined)
       .orderBy(desc(invoices.issueDate)),
     db.select({ id: contacts.id, name: contacts.name }).from(contacts).orderBy(asc(contacts.name)),
     db
@@ -92,18 +106,23 @@ export default async function NotasFiscaisPage({
             Registro interno das notas fiscais emitidas, vinculadas aos clientes.
           </p>
         </div>
-        <InvoiceFormDialog
-          contacts={contactList}
-          budgets={budgetOptionList}
-          defaultBudgetId={novo}
-          defaultOpen={Boolean(novo)}
-          trigger={
-            <Button>
-              <PlusIcon className="size-4" />
-              Nova nota fiscal
-            </Button>
-          }
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <MineFilterToggle mine={mine} basePath="/notas-fiscais" />
+          <InvoiceFormDialog
+            contacts={contactList}
+            budgets={budgetOptionList}
+            users={allUsers}
+            currentUserId={currentUser.id}
+            defaultBudgetId={novo}
+            defaultOpen={Boolean(novo)}
+            trigger={
+              <Button>
+                <PlusIcon className="size-4" />
+                Nova nota fiscal
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       <Card>
@@ -122,6 +141,7 @@ export default async function NotasFiscaisPage({
                   <TableHead>Emissão</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Responsável</TableHead>
                   <TableHead>Emitida por</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
@@ -155,6 +175,9 @@ export default async function NotasFiscaisPage({
                       <InvoiceStatusBadge status={row.status} />
                     </TableCell>
                     <TableCell className="text-muted-foreground">
+                      {row.assignedToName ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
                       {row.createdByName ?? "—"}
                     </TableCell>
                     <TableCell>
@@ -162,6 +185,8 @@ export default async function NotasFiscaisPage({
                         invoice={row}
                         contacts={contactList}
                         budgets={budgetOptionList}
+                        users={allUsers}
+                        currentUserId={currentUser.id}
                         canDelete={canDelete}
                       />
                     </TableCell>

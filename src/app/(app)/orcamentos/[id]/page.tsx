@@ -3,7 +3,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 import { db } from "@/db";
-import { budgetFiles, budgetItems, budgets, contacts, itemCatalog } from "@/db/schema";
+import { budgetFiles, budgetItems, budgets, contacts, itemCatalog, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetForm } from "../budget-form";
@@ -29,7 +29,7 @@ export default async function OrcamentoDetailPage({
 
   if (!budget) notFound();
 
-  const [items, contactList, files, catalogItems] = await Promise.all([
+  const [items, contactList, files, catalogItems, userList] = await Promise.all([
     db
       .select()
       .from(budgetItems)
@@ -57,6 +57,11 @@ export default async function OrcamentoDetailPage({
       })
       .from(itemCatalog)
       .orderBy(asc(itemCatalog.description)),
+    db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(eq(users.active, true))
+      .orderBy(asc(users.name)),
   ]);
 
   const linkedContact = contactList.find((c) => c.id === budget.contactId);
@@ -90,6 +95,8 @@ export default async function OrcamentoDetailPage({
           <BudgetForm
             contacts={contactList}
             catalogItems={catalogItems}
+            users={userList}
+            currentUserId={currentUser.id}
             budget={{
               id: budget.id,
               title: budget.title,
@@ -107,6 +114,7 @@ export default async function OrcamentoDetailPage({
               hasGlassAndStones: budget.hasGlassAndStones,
               technicalSpecs: budget.technicalSpecs,
               notes: budget.notes,
+              assignedToId: budget.assignedToId,
               items: items.map((item) => ({
                 description: item.description,
                 quantity: item.quantity,

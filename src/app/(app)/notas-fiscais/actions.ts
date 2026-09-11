@@ -19,6 +19,7 @@ const invoiceSchema = z.object({
   issueDate: z.string().min(1, "Informe a data de emissão."),
   total: z.string().min(1, "Informe o valor."),
   notes: z.string().trim().optional(),
+  assignedToId: z.string().trim().optional(),
 });
 
 export type InvoiceFormState = { error?: string; id?: string };
@@ -31,6 +32,7 @@ function parseInvoiceForm(formData: FormData) {
     issueDate: formData.get("issueDate"),
     total: formData.get("total"),
     notes: formData.get("notes") || undefined,
+    assignedToId: formData.get("assignedToId") || undefined,
   });
 }
 
@@ -70,6 +72,7 @@ export async function createInvoice(
     issueDate: localDateTimeToUTC(parsed.data.issueDate, "12:00"),
     totalCents: parseCurrencyToCents(parsed.data.total),
     notes: parsed.data.notes || null,
+    assignedToId: parsed.data.assignedToId || user.id,
     createdById: user.id,
   });
 
@@ -101,6 +104,7 @@ export async function updateInvoice(
       issueDate: localDateTimeToUTC(parsed.data.issueDate, "12:00"),
       totalCents: parseCurrencyToCents(parsed.data.total),
       notes: parsed.data.notes || null,
+      assignedToId: parsed.data.assignedToId || null,
       updatedAt: new Date(),
     })
     .where(eq(invoices.id, id));

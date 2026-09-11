@@ -19,6 +19,8 @@ import type { Invoice } from "@/db/schema";
 
 type ContactOption = { id: string; name: string };
 
+type UserOption = { id: string; name: string };
+
 type BudgetOption = {
   id: string;
   number: string;
@@ -36,6 +38,7 @@ type InvoiceData = {
   issueDate: Date;
   totalCents: number;
   notes: string | null;
+  assignedToId: string | null;
   status: Invoice["status"];
 };
 
@@ -43,11 +46,15 @@ export function InvoiceRowMenu({
   invoice,
   contacts,
   budgets,
+  users,
+  currentUserId,
   canDelete,
 }: {
   invoice: InvoiceData;
   contacts: ContactOption[];
   budgets: BudgetOption[];
+  users: UserOption[];
+  currentUserId: string;
   canDelete: boolean;
 }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -100,6 +107,8 @@ export function InvoiceRowMenu({
         invoice={invoice}
         contacts={contacts}
         budgets={budgets}
+        users={users}
+        currentUserId={currentUserId}
         open={editOpen}
         onOpenChange={setEditOpen}
       />

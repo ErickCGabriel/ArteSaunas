@@ -42,6 +42,7 @@ const budgetSchema = z.object({
   hasGlassAndStones: z.enum(["sim", "nao", ""]).optional(),
   technicalSpecs: z.string().trim().optional(),
   notes: z.string().trim().optional(),
+  assignedToId: z.string().trim().optional(),
   items: z
     .array(itemSchema)
     .min(1, "Adicione pelo menos um item ao orçamento."),
@@ -74,6 +75,7 @@ function parseBudgetForm(formData: FormData) {
     hasGlassAndStones: formData.get("hasGlassAndStones") || "",
     technicalSpecs: formData.get("technicalSpecs") || undefined,
     notes: formData.get("notes") || undefined,
+    assignedToId: formData.get("assignedToId") || undefined,
     items,
   });
 }
@@ -119,6 +121,7 @@ function budgetFieldsFromData(data: Omit<z.infer<typeof budgetSchema>, "items">)
         : data.hasGlassAndStones === "sim",
     technicalSpecs: data.technicalSpecs || null,
     notes: data.notes || null,
+    assignedToId: data.assignedToId || null,
   };
 }
 
@@ -141,6 +144,7 @@ export async function createBudget(
       id,
       number,
       ...budgetFieldsFromData(data),
+      assignedToId: data.assignedToId || user.id,
       createdById: user.id,
     });
 

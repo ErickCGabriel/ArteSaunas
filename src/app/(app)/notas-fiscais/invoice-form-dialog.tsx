@@ -30,6 +30,8 @@ import {
 
 type ContactOption = { id: string; name: string };
 
+type UserOption = { id: string; name: string };
+
 type BudgetOption = {
   id: string;
   number: string;
@@ -47,12 +49,15 @@ type InvoiceData = {
   issueDate: Date;
   totalCents: number;
   notes: string | null;
+  assignedToId: string | null;
 };
 
 export function InvoiceFormDialog({
   invoice,
   contacts,
   budgets,
+  users,
+  currentUserId,
   trigger,
   defaultBudgetId,
   defaultOpen,
@@ -62,6 +67,8 @@ export function InvoiceFormDialog({
   invoice?: InvoiceData;
   contacts: ContactOption[];
   budgets: BudgetOption[];
+  users: UserOption[];
+  currentUserId: string;
   trigger?: ReactNode;
   /** Pré-seleciona um orçamento ao abrir para criar uma nota nova (vindo do orçamento). */
   defaultBudgetId?: string;
@@ -80,6 +87,9 @@ export function InvoiceFormDialog({
   const [budgetId, setBudgetId] = useState(initialBudgetId);
   const [contactId, setContactId] = useState(
     invoice?.contactId ?? initialBudget?.contactId ?? ""
+  );
+  const [assignedToId, setAssignedToId] = useState(
+    invoice?.assignedToId ?? currentUserId
   );
   const [total, setTotal] = useState(
     invoice
@@ -166,6 +176,23 @@ export function InvoiceFormDialog({
         <form action={handleSubmit} className="flex flex-col gap-4">
           <input type="hidden" name="contactId" value={contactId} />
           <input type="hidden" name="budgetId" value={budgetId} />
+          <input type="hidden" name="assignedToId" value={assignedToId} />
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="assignedToId-trigger">Responsável</Label>
+            <Select value={assignedToId} onValueChange={setAssignedToId}>
+              <SelectTrigger id="assignedToId-trigger">
+                <SelectValue placeholder="Selecione um responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="contactId-trigger">Cliente *</Label>
