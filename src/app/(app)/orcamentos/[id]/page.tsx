@@ -59,6 +59,10 @@ export default async function OrcamentoDetailPage({
       .orderBy(asc(itemCatalog.description)),
   ]);
 
+  const linkedContact = contactList.find((c) => c.id === budget.contactId);
+  const whatsappName = budget.requesterName || linkedContact?.name || null;
+  const whatsappPhone = budget.requesterPhone || linkedContact?.phone || null;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -72,6 +76,8 @@ export default async function OrcamentoDetailPage({
           budgetId={budget.id}
           number={budget.number}
           status={budget.status}
+          whatsappName={whatsappName}
+          whatsappPhone={whatsappPhone}
           canDelete={canDelete}
         />
       </div>
