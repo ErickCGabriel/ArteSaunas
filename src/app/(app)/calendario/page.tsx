@@ -115,9 +115,11 @@ export default async function CalendarioPage({
           )}
         </div>
         {connected && (
-          <div className="flex flex-wrap items-center gap-2">
-            <CalendarViewToggle view={view} monthKey={grid.monthKey} dayKey={selectedDayKey} />
-            <SyncButton />
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <div className="flex items-center justify-between gap-2 sm:justify-start">
+              <CalendarViewToggle view={view} monthKey={grid.monthKey} dayKey={selectedDayKey} />
+              <SyncButton />
+            </div>
             <EventFormDialog
               contacts={contactOptions}
               budgets={budgetOptions}
@@ -125,7 +127,7 @@ export default async function CalendarioPage({
               currentUserId={user.id}
               defaultDate={selectedDayKey}
               trigger={
-                <Button>
+                <Button className="w-full sm:w-auto">
                   <PlusIcon className="size-4" />
                   Novo evento
                 </Button>

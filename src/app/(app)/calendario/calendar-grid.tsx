@@ -21,8 +21,8 @@ export function CalendarGrid({
 }) {
   return (
     <Card>
-      <CardContent className="p-4">
-        <div className="mb-4 flex items-center justify-between">
+      <CardContent className="p-2 sm:p-4">
+        <div className="mb-4 flex items-center justify-between px-2 sm:px-0">
           <p className="font-medium">
             {MONTH_NAMES[grid.monthIndex]} de {grid.year}
           </p>
@@ -47,7 +47,7 @@ export function CalendarGrid({
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
+        <div className="grid grid-cols-7 gap-0.5 text-center text-xs text-muted-foreground sm:gap-1">
           {WEEKDAY_LABELS.map((label) => (
             <div key={label} className="py-1">
               {label}
@@ -55,7 +55,7 @@ export function CalendarGrid({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
           {grid.weeks.flat().map((dayKey) => {
             const day = Number(dayKey.slice(8, 10));
             const inMonth = dayKey.slice(0, 7) === grid.monthKey;
@@ -68,7 +68,7 @@ export function CalendarGrid({
                 key={dayKey}
                 href={`/calendario?month=${grid.monthKey}&day=${dayKey}&view=${view}`}
                 className={cn(
-                  "flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md text-sm transition-colors",
+                  "flex aspect-square min-h-11 flex-col items-center justify-center gap-0.5 rounded-md text-sm transition-colors",
                   inMonth ? "text-foreground" : "text-muted-foreground/40",
                   isSelected
                     ? "bg-primary text-primary-foreground"

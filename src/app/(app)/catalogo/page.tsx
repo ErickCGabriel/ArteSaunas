@@ -49,39 +49,62 @@ export default async function CatalogoPage() {
         />
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {items.length === 0 ? (
-            <p className="p-6 text-center text-sm text-muted-foreground">
-              Nenhum item cadastrado ainda. Itens salvos aqui aparecem como sugestão
-              ao adicionar itens num orçamento.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead className="text-right">Valor padrão</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.description}</TableCell>
-                    <TableCell className="text-right">
-                      {formatCentsToBRL(item.defaultUnitPriceCents)}
-                    </TableCell>
-                    <TableCell>
-                      <CatalogItemRowMenu item={item} canDelete={canDelete} />
-                    </TableCell>
+      {items.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center text-sm text-muted-foreground">
+            Nenhum item cadastrado ainda. Itens salvos aqui aparecem como sugestão
+            ao adicionar itens num orçamento.
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Celular: lista de cartões. */}
+          <div className="flex flex-col gap-3 sm:hidden">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-sm"
+              >
+                <span className="font-medium">{item.description}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-muted-foreground">
+                    {formatCentsToBRL(item.defaultUnitPriceCents)}
+                  </span>
+                  <CatalogItemRowMenu item={item} canDelete={canDelete} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Computador: tabela. */}
+          <Card className="hidden sm:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead className="text-right">Valor padrão</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.description}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCentsToBRL(item.defaultUnitPriceCents)}
+                      </TableCell>
+                      <TableCell>
+                        <CatalogItemRowMenu item={item} canDelete={canDelete} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }
