@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { contacts, itemCatalog, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
 import { BudgetForm } from "../budget-form";
 
 export const metadata: Metadata = { title: "Novo orçamento — Arte Saunas" };
@@ -39,14 +40,10 @@ export default async function NovoOrcamentoPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Novo orçamento
-        </h1>
-        <p className="text-muted-foreground">
-          Preencha os dados e os itens do orçamento.
-        </p>
-      </div>
+      <PageHeader
+        title="Novo orçamento"
+        description="Preencha os dados e os itens do orçamento."
+      />
 
       <Card>
         <CardHeader>

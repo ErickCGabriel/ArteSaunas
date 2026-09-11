@@ -20,6 +20,7 @@ import {
 import { formatCentsToBRL } from "@/lib/currency";
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
 import { MineFilterToggle } from "@/components/mine-filter-toggle";
+import { PageHeader } from "@/components/page-header";
 import { InvoiceFormDialog } from "./invoice-form-dialog";
 import { InvoiceRowMenu } from "./invoice-row-menu";
 
@@ -99,31 +100,29 @@ export default async function NotasFiscaisPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Notas Fiscais</h1>
-          <p className="text-muted-foreground">
-            Registro interno das notas fiscais emitidas, vinculadas aos clientes.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <MineFilterToggle mine={mine} basePath="/notas-fiscais" />
-          <InvoiceFormDialog
-            contacts={contactList}
-            budgets={budgetOptionList}
-            users={allUsers}
-            currentUserId={currentUser.id}
-            defaultBudgetId={novo}
-            defaultOpen={Boolean(novo)}
-            trigger={
-              <Button>
-                <PlusIcon className="size-4" />
-                Nova nota fiscal
-              </Button>
-            }
-          />
-        </div>
-      </div>
+      <PageHeader
+        title="Notas Fiscais"
+        description="Registro interno das notas fiscais emitidas, vinculadas aos clientes."
+        actions={
+          <>
+            <MineFilterToggle mine={mine} basePath="/notas-fiscais" />
+            <InvoiceFormDialog
+              contacts={contactList}
+              budgets={budgetOptionList}
+              users={allUsers}
+              currentUserId={currentUser.id}
+              defaultBudgetId={novo}
+              defaultOpen={Boolean(novo)}
+              trigger={
+                <Button>
+                  <PlusIcon className="size-4" />
+                  Nova nota fiscal
+                </Button>
+              }
+            />
+          </>
+        }
+      />
 
       {rows.length === 0 ? (
         <Card>

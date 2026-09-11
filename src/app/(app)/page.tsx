@@ -8,6 +8,7 @@ import { budgetItems, budgets, contacts } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetStatusBadge } from "@/components/budget-status-badge";
+import { PageHeader } from "@/components/page-header";
 import { formatCentsToBRL } from "@/lib/currency";
 
 export default async function DashboardPage() {
@@ -39,47 +40,47 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Olá, {user.name.split(" ")[0]}
-        </h1>
-        <p className="text-muted-foreground">
-          Resumo da Arte Saunas.
-        </p>
-      </div>
+      <PageHeader
+        title={`Olá, ${user.name.split(" ")[0]}`}
+        description="Resumo da Arte Saunas."
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <Card>
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-2">
+          <CardContent className="flex items-center gap-4 p-4 sm:p-5">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <FileTextIcon className="size-5" />
+            </div>
+            <div>
               <p className="text-xs text-muted-foreground sm:text-sm">
                 Orçamentos em aberto
               </p>
-              <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
+              <p className="font-serif text-2xl font-medium text-foreground sm:text-3xl">
+                {openBudgets?.count ?? 0}
+              </p>
             </div>
-            <p className="mt-1 text-2xl font-semibold text-primary sm:text-3xl">
-              {openBudgets?.count ?? 0}
-            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-2">
+          <CardContent className="flex items-center gap-4 p-4 sm:p-5">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <UsersIcon className="size-5" />
+            </div>
+            <div>
               <p className="text-xs text-muted-foreground sm:text-sm">
                 Contatos cadastrados
               </p>
-              <UsersIcon className="size-4 shrink-0 text-muted-foreground" />
+              <p className="font-serif text-2xl font-medium text-foreground sm:text-3xl">
+                {contactCount?.count ?? 0}
+              </p>
             </div>
-            <p className="mt-1 text-2xl font-semibold text-primary sm:text-3xl">
-              {contactCount?.count ?? 0}
-            </p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Orçamentos recentes</CardTitle>
+          <CardTitle className="font-serif text-lg font-medium">Orçamentos recentes</CardTitle>
           <Button asChild size="sm">
             <Link href="/orcamentos/novo">
               <PlusIcon className="size-4" />

@@ -42,10 +42,10 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+              "relative inline-flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-colors after:absolute after:inset-x-2.5 after:bottom-1 after:h-[2px] after:rounded-full after:transition-opacity",
               active
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                ? "text-foreground after:ember-rule after:opacity-100"
+                : "text-muted-foreground after:opacity-0 hover:text-foreground hover:after:opacity-40 hover:after:ember-rule"
             )}
           >
             <Icon className="size-4" />

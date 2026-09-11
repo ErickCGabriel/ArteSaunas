@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 import { ContactFormDialog } from "./contact-form-dialog";
 import { ContactImportDialog } from "./contact-import-dialog";
 import { ContactRowMenu } from "./contact-row-menu";
@@ -60,38 +61,36 @@ export default async function ContatosPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Contatos</h1>
-          <p className="text-muted-foreground">
-            Clientes e outros contatos da Arte Saunas.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" asChild>
-            <a href="/api/contatos/export" download>
-              <DownloadIcon className="size-4" />
-              Exportar
-            </a>
-          </Button>
-          <ContactImportDialog
-            trigger={
-              <Button variant="outline">
-                <UploadIcon className="size-4" />
-                Importar
-              </Button>
-            }
-          />
-          <ContactFormDialog
-            trigger={
-              <Button>
-                <PlusIcon className="size-4" />
-                Novo contato
-              </Button>
-            }
-          />
-        </div>
-      </div>
+      <PageHeader
+        title="Contatos"
+        description="Clientes e outros contatos da Arte Saunas."
+        actions={
+          <>
+            <Button variant="outline" asChild>
+              <a href="/api/contatos/export" download>
+                <DownloadIcon className="size-4" />
+                Exportar
+              </a>
+            </Button>
+            <ContactImportDialog
+              trigger={
+                <Button variant="outline">
+                  <UploadIcon className="size-4" />
+                  Importar
+                </Button>
+              }
+            />
+            <ContactFormDialog
+              trigger={
+                <Button>
+                  <PlusIcon className="size-4" />
+                  Novo contato
+                </Button>
+              }
+            />
+          </>
+        }
+      />
 
       <form className="flex flex-wrap items-center gap-2">
         <div className="relative w-full max-w-sm">

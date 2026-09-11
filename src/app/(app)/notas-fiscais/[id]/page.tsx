@@ -9,6 +9,7 @@ import { budgetItems, budgets, contacts, invoiceFiles, invoices, users } from "@
 import { requireUser } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
+import { PageHeader } from "@/components/page-header";
 import { formatCentsToBRL } from "@/lib/currency";
 import { InvoiceHeaderActions } from "./invoice-header-actions";
 import { InvoiceFiles } from "./invoice-files";
@@ -93,21 +94,21 @@ export default async function NotaFiscalDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">Nota fiscal</p>
-          <h1 className="text-2xl font-semibold tracking-tight">{invoice.number}</h1>
-        </div>
-        <InvoiceHeaderActions
-          invoice={invoice}
-          status={invoice.status}
-          contacts={contactList}
-          budgets={budgetOptionList}
-          users={userList}
-          currentUserId={currentUser.id}
-          canDelete={canDelete}
-        />
-      </div>
+      <PageHeader
+        eyebrow="Nota fiscal"
+        title={invoice.number}
+        actions={
+          <InvoiceHeaderActions
+            invoice={invoice}
+            status={invoice.status}
+            contacts={contactList}
+            budgets={budgetOptionList}
+            users={userList}
+            currentUserId={currentUser.id}
+            canDelete={canDelete}
+          />
+        }
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">

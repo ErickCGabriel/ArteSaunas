@@ -16,6 +16,7 @@ import {
 import { requireUser } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContractStatusBadge } from "@/components/contract-status-badge";
+import { PageHeader } from "@/components/page-header";
 import { formatCentsToBRL } from "@/lib/currency";
 import { ContractHeaderActions } from "./contract-header-actions";
 import { ContractFiles } from "./contract-files";
@@ -101,21 +102,21 @@ export default async function ContratoDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">Contrato</p>
-          <h1 className="text-2xl font-semibold tracking-tight">{contract.number}</h1>
-        </div>
-        <ContractHeaderActions
-          contract={contract}
-          status={contract.status}
-          contacts={contactList}
-          budgets={budgetOptionList}
-          users={userList}
-          currentUserId={currentUser.id}
-          canDelete={canDelete}
-        />
-      </div>
+      <PageHeader
+        eyebrow="Contrato"
+        title={contract.number}
+        actions={
+          <ContractHeaderActions
+            contract={contract}
+            status={contract.status}
+            contacts={contactList}
+            budgets={budgetOptionList}
+            users={userList}
+            currentUserId={currentUser.id}
+            canDelete={canDelete}
+          />
+        }
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">

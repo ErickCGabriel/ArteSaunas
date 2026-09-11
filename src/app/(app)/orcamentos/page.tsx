@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { BudgetStatusBadge } from "@/components/budget-status-badge";
 import { MineFilterToggle } from "@/components/mine-filter-toggle";
+import { PageHeader } from "@/components/page-header";
 import { formatCentsToBRL } from "@/lib/currency";
 
 export const metadata: Metadata = { title: "Orçamentos — Arte Saunas" };
@@ -54,25 +55,21 @@ export default async function OrcamentosPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Orçamentos
-          </h1>
-          <p className="text-muted-foreground">
-            Propostas de serviços e produtos para clientes.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <MineFilterToggle mine={mine} basePath="/orcamentos" />
-          <Button asChild>
-            <Link href="/orcamentos/novo">
-              <PlusIcon className="size-4" />
-              Novo orçamento
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Orçamentos"
+        description="Propostas de serviços e produtos para clientes."
+        actions={
+          <>
+            <MineFilterToggle mine={mine} basePath="/orcamentos" />
+            <Button asChild>
+              <Link href="/orcamentos/novo">
+                <PlusIcon className="size-4" />
+                Novo orçamento
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       {rows.length === 0 ? (
         <Card>

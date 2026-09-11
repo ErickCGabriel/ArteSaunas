@@ -14,6 +14,7 @@ import {
 import { APP_TIME_ZONE, toLocalDateKey } from "@/lib/timezone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
 import { EventFormDialog } from "./event-form-dialog";
 import { EventRow } from "./event-row";
 import { GoogleConnectionCard } from "./google-connection-card";
@@ -100,42 +101,44 @@ export default async function CalendarioPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Calendário</h1>
-          <p className="text-muted-foreground">
+      <PageHeader
+        title="Calendário"
+        description={
+          <>
             Visitas, instalações e manutenções sincronizadas com o Google Calendar.
-          </p>
-          {connected && (
-            <p className="text-xs text-muted-foreground">
-              {lastSyncedAt
-                ? `Sincronizado em ${lastSyncedFormatter.format(new Date(lastSyncedAt))}`
-                : "Ainda não sincronizado"}
-            </p>
-          )}
-        </div>
-        {connected && (
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <div className="flex items-center justify-between gap-2 sm:justify-start">
-              <CalendarViewToggle view={view} monthKey={grid.monthKey} dayKey={selectedDayKey} />
-              <SyncButton />
-            </div>
-            <EventFormDialog
-              contacts={contactOptions}
-              budgets={budgetOptions}
-              users={userOptions}
-              currentUserId={user.id}
-              defaultDate={selectedDayKey}
-              trigger={
-                <Button className="w-full sm:w-auto">
-                  <PlusIcon className="size-4" />
-                  Novo evento
-                </Button>
-              }
-            />
-          </div>
-        )}
-      </div>
+            {connected && (
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {lastSyncedAt
+                  ? `Sincronizado em ${lastSyncedFormatter.format(new Date(lastSyncedAt))}`
+                  : "Ainda não sincronizado"}
+              </span>
+            )}
+          </>
+        }
+        actions={
+          connected && (
+            <>
+              <div className="flex items-center justify-between gap-2 sm:justify-start">
+                <CalendarViewToggle view={view} monthKey={grid.monthKey} dayKey={selectedDayKey} />
+                <SyncButton />
+              </div>
+              <EventFormDialog
+                contacts={contactOptions}
+                budgets={budgetOptions}
+                users={userOptions}
+                currentUserId={user.id}
+                defaultDate={selectedDayKey}
+                trigger={
+                  <Button className="w-full sm:w-auto">
+                    <PlusIcon className="size-4" />
+                    Novo evento
+                  </Button>
+                }
+              />
+            </>
+          )
+        }
+      />
 
       {google_connected && (
         <Card className="border-success/40 bg-success/10">

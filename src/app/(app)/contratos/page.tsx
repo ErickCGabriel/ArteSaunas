@@ -20,6 +20,7 @@ import {
 import { formatCentsToBRL } from "@/lib/currency";
 import { ContractStatusBadge } from "@/components/contract-status-badge";
 import { MineFilterToggle } from "@/components/mine-filter-toggle";
+import { PageHeader } from "@/components/page-header";
 import { ContractFormDialog } from "./contract-form-dialog";
 import { ContractRowMenu } from "./contract-row-menu";
 
@@ -97,31 +98,29 @@ export default async function ContratosPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Contratos</h1>
-          <p className="text-muted-foreground">
-            Contratos de instalação assinados pelos clientes, vinculados aos orçamentos.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <MineFilterToggle mine={mine} basePath="/contratos" />
-          <ContractFormDialog
-            contacts={contactList}
-            budgets={budgetOptionList}
-            users={allUsers}
-            currentUserId={currentUser.id}
-            defaultBudgetId={novo}
-            defaultOpen={Boolean(novo)}
-            trigger={
-              <Button>
-                <PlusIcon className="size-4" />
-                Novo contrato
-              </Button>
-            }
-          />
-        </div>
-      </div>
+      <PageHeader
+        title="Contratos"
+        description="Contratos de instalação assinados pelos clientes, vinculados aos orçamentos."
+        actions={
+          <>
+            <MineFilterToggle mine={mine} basePath="/contratos" />
+            <ContractFormDialog
+              contacts={contactList}
+              budgets={budgetOptionList}
+              users={allUsers}
+              currentUserId={currentUser.id}
+              defaultBudgetId={novo}
+              defaultOpen={Boolean(novo)}
+              trigger={
+                <Button>
+                  <PlusIcon className="size-4" />
+                  Novo contrato
+                </Button>
+              }
+            />
+          </>
+        }
+      />
 
       {rows.length === 0 ? (
         <Card>

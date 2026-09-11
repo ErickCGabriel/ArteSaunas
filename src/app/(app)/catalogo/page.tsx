@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 import { formatCentsToBRL } from "@/lib/currency";
 import { CatalogItemFormDialog } from "./catalog-item-form-dialog";
 import { CatalogItemRowMenu } from "./catalog-item-row-menu";
@@ -32,22 +33,20 @@ export default async function CatalogoPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Catálogo</h1>
-          <p className="text-muted-foreground">
-            Itens e serviços recorrentes, sugeridos ao montar um orçamento.
-          </p>
-        </div>
-        <CatalogItemFormDialog
-          trigger={
-            <Button>
-              <PlusIcon className="size-4" />
-              Novo item
-            </Button>
-          }
-        />
-      </div>
+      <PageHeader
+        title="Catálogo"
+        description="Itens e serviços recorrentes, sugeridos ao montar um orçamento."
+        actions={
+          <CatalogItemFormDialog
+            trigger={
+              <Button>
+                <PlusIcon className="size-4" />
+                Novo item
+              </Button>
+            }
+          />
+        }
+      />
 
       {items.length === 0 ? (
         <Card>

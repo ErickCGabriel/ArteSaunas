@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { budgetFiles, budgetItems, budgets, contacts, itemCatalog, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
 import { BudgetForm } from "../budget-form";
 import { BudgetHeaderActions } from "./budget-header-actions";
 import { BudgetFiles } from "./budget-files";
@@ -70,22 +71,20 @@ export default async function OrcamentoDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">{budget.number}</p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {budget.title}
-          </h1>
-        </div>
-        <BudgetHeaderActions
-          budgetId={budget.id}
-          number={budget.number}
-          status={budget.status}
-          whatsappName={whatsappName}
-          whatsappPhone={whatsappPhone}
-          canDelete={canDelete}
-        />
-      </div>
+      <PageHeader
+        eyebrow={budget.number}
+        title={budget.title}
+        actions={
+          <BudgetHeaderActions
+            budgetId={budget.id}
+            number={budget.number}
+            status={budget.status}
+            whatsappName={whatsappName}
+            whatsappPhone={whatsappPhone}
+            canDelete={canDelete}
+          />
+        }
+      />
 
       <Card>
         <CardHeader>

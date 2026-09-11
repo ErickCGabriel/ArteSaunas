@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetStatusBadge } from "@/components/budget-status-badge";
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
 import { ContractStatusBadge } from "@/components/contract-status-badge";
+import { PageHeader } from "@/components/page-header";
 import { formatCentsToBRL } from "@/lib/currency";
 import { ContactFormDialog } from "../contact-form-dialog";
 import { ContactFiles } from "./contact-files";
@@ -110,25 +111,21 @@ export default async function ContatoDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {contact.name}
-          </h1>
-          <p className="text-muted-foreground">
-            {[contact.phone, contact.email].filter(Boolean).join(" · ") || "—"}
-          </p>
-        </div>
-        <ContactFormDialog
-          contact={contact}
-          trigger={
-            <Button variant="outline">
-              <PencilIcon className="size-4" />
-              Editar
-            </Button>
-          }
-        />
-      </div>
+      <PageHeader
+        title={contact.name}
+        description={[contact.phone, contact.email].filter(Boolean).join(" · ") || "—"}
+        actions={
+          <ContactFormDialog
+            contact={contact}
+            trigger={
+              <Button variant="outline">
+                <PencilIcon className="size-4" />
+                Editar
+              </Button>
+            }
+          />
+        }
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">

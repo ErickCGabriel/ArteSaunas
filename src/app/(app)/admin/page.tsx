@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 import { UserFormDialog } from "./user-form-dialog";
 import { UserRowMenu } from "./user-row-menu";
 
@@ -39,24 +40,20 @@ export default async function AdminPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Administração
-          </h1>
-          <p className="text-muted-foreground">
-            Gerencie os usuários com acesso ao sistema.
-          </p>
-        </div>
-        <UserFormDialog
-          trigger={
-            <Button>
-              <PlusIcon className="size-4" />
-              Novo usuário
-            </Button>
-          }
-        />
-      </div>
+      <PageHeader
+        title="Administração"
+        description="Gerencie os usuários com acesso ao sistema."
+        actions={
+          <UserFormDialog
+            trigger={
+              <Button>
+                <PlusIcon className="size-4" />
+                Novo usuário
+              </Button>
+            }
+          />
+        }
+      />
 
       {/* Celular: lista de cartões — a tabela fica larga demais numa tela estreita. */}
       <div className="flex flex-col gap-3 sm:hidden">
