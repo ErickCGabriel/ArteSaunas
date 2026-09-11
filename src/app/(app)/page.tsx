@@ -48,31 +48,31 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <Card>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm text-muted-foreground">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground sm:text-sm">
                 Orçamentos em aberto
               </p>
-              <p className="text-3xl font-semibold text-primary">
-                {openBudgets?.count ?? 0}
-              </p>
+              <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
             </div>
-            <FileTextIcon className="size-8 text-muted-foreground" />
+            <p className="mt-1 text-2xl font-semibold text-primary sm:text-3xl">
+              {openBudgets?.count ?? 0}
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm text-muted-foreground">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground sm:text-sm">
                 Contatos cadastrados
               </p>
-              <p className="text-3xl font-semibold text-primary">
-                {contactCount?.count ?? 0}
-              </p>
+              <UsersIcon className="size-4 shrink-0 text-muted-foreground" />
             </div>
-            <UsersIcon className="size-8 text-muted-foreground" />
+            <p className="mt-1 text-2xl font-semibold text-primary sm:text-3xl">
+              {contactCount?.count ?? 0}
+            </p>
           </CardContent>
         </Card>
       </div>
