@@ -6,8 +6,12 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Arte Saunas",
     description:
       "Sistema de gestão da Arte Saunas: orçamentos, contratos, notas fiscais, contatos e agenda.",
+    id: "/",
     start_url: "/",
+    scope: "/",
     display: "standalone",
+    orientation: "any",
+    categories: ["business", "productivity"],
     background_color: "#120c09",
     theme_color: "#120c09",
     lang: "pt-BR",
