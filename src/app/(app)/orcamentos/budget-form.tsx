@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import { Loader2Icon, PaperclipIcon, UserIcon, XIcon } from "lucide-react";
 
 import { createBudget, updateBudget, uploadBudgetFile } from "./actions";
-import { BudgetItemsEditor, type BudgetItemInput } from "./budget-items-editor";
+import {
+  BudgetItemsEditor,
+  type BudgetItemInput,
+  type CatalogOption,
+} from "./budget-items-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,9 +58,11 @@ function numberToInput(value: number | null) {
 
 export function BudgetForm({
   contacts,
+  catalogItems,
   budget,
 }: {
   contacts: ContactOption[];
+  catalogItems?: CatalogOption[];
   budget?: BudgetData;
 }) {
   const router = useRouter();
@@ -303,7 +309,11 @@ export function BudgetForm({
 
       <div className="flex flex-col gap-1.5">
         <Label>Itens do orçamento *</Label>
-        <BudgetItemsEditor name="items" initialItems={initialItems} />
+        <BudgetItemsEditor
+          name="items"
+          initialItems={initialItems}
+          catalogItems={catalogItems}
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">

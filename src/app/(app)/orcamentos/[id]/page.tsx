@@ -3,7 +3,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 import { db } from "@/db";
-import { budgetFiles, budgetItems, budgets, contacts } from "@/db/schema";
+import { budgetFiles, budgetItems, budgets, contacts, itemCatalog } from "@/db/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetForm } from "../budget-form";
 import { BudgetHeaderActions } from "./budget-header-actions";
@@ -26,7 +26,7 @@ export default async function OrcamentoDetailPage({
 
   if (!budget) notFound();
 
-  const [items, contactList, files] = await Promise.all([
+  const [items, contactList, files, catalogItems] = await Promise.all([
     db
       .select()
       .from(budgetItems)
@@ -46,6 +46,14 @@ export default async function OrcamentoDetailPage({
       .from(budgetFiles)
       .where(eq(budgetFiles.budgetId, id))
       .orderBy(desc(budgetFiles.createdAt)),
+    db
+      .select({
+        id: itemCatalog.id,
+        description: itemCatalog.description,
+        defaultUnitPriceCents: itemCatalog.defaultUnitPriceCents,
+      })
+      .from(itemCatalog)
+      .orderBy(asc(itemCatalog.description)),
   ]);
 
   return (
@@ -71,6 +79,7 @@ export default async function OrcamentoDetailPage({
         <CardContent>
           <BudgetForm
             contacts={contactList}
+            catalogItems={catalogItems}
             budget={{
               id: budget.id,
               title: budget.title,

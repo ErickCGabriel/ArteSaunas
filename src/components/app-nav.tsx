@@ -9,6 +9,7 @@ import {
   CalendarIcon,
   ShieldIcon,
   ReceiptIcon,
+  PackageIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/", label: "Painel", icon: LayoutDashboardIcon, exact: true },
   { href: "/orcamentos", label: "Orçamentos", icon: FileTextIcon },
+  { href: "/catalogo", label: "Catálogo", icon: PackageIcon },
   { href: "/notas-fiscais", label: "Notas Fiscais", icon: ReceiptIcon },
   { href: "/contatos", label: "Contatos", icon: UsersIcon },
   { href: "/calendario", label: "Calendário", icon: CalendarIcon },

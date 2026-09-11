@@ -209,6 +209,20 @@ export const invoiceFiles = pgTable(
   (table) => [index("invoice_files_invoice_idx").on(table.invoiceId)]
 );
 
+export const itemCatalog = pgTable(
+  "item_catalog",
+  {
+    id: text("id").primaryKey(),
+    description: text("description").notNull(),
+    defaultUnitPriceCents: integer("default_unit_price_cents").notNull().default(0),
+    createdById: text("created_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    ...timestamps,
+  },
+  (table) => [index("item_catalog_description_idx").on(table.description)]
+);
+
 // Single-row-per-key store for small pieces of app config (Google OAuth
 // tokens, connected calendar id, etc.) that don't warrant their own table.
 export const appSettings = pgTable("app_settings", {
@@ -235,3 +249,5 @@ export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 export type InvoiceFile = typeof invoiceFiles.$inferSelect;
 export type NewInvoiceFile = typeof invoiceFiles.$inferInsert;
+export type ItemCatalogEntry = typeof itemCatalog.$inferSelect;
+export type NewItemCatalogEntry = typeof itemCatalog.$inferInsert;
