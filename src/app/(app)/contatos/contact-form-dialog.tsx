@@ -126,7 +126,7 @@ export function ContactFormDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="notes">Notas</Label>
+            <Label htmlFor="notes">Observação</Label>
             <Textarea
               id="notes"
               name="notes"

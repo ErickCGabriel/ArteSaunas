@@ -54,6 +54,27 @@ export const contacts = pgTable(
   (table) => [index("contacts_name_idx").on(table.name)]
 );
 
+// Histórico de anotações do contato — texto livre, datado, somente
+// acrescenta (sem editar); excluir é restrito a admin/gerente, pra manter o
+// histórico confiável.
+export const contactNotes = pgTable(
+  "contact_notes",
+  {
+    id: text("id").primaryKey(),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdById: text("created_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("contact_notes_contact_idx").on(table.contactId)]
+);
+
 export const budgets = pgTable(
   "budgets",
   {
@@ -102,6 +123,35 @@ export const budgets = pgTable(
     index("budgets_contact_idx").on(table.contactId),
     index("budgets_status_idx").on(table.status),
     index("budgets_assigned_to_idx").on(table.assignedToId),
+  ]
+);
+
+// Histórico de manutenções/problemas do contato — saunas exigem revisão
+// periódica e nem sempre dá pra prever quando; aqui fica registrado o que
+// aconteceu e quando, opcionalmente ligado ao orçamento/instalação de
+// origem. Mesma política de exclusão dos contactNotes (só admin/gerente).
+export const maintenanceRecords = pgTable(
+  "maintenance_records",
+  {
+    id: text("id").primaryKey(),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    budgetId: text("budget_id").references(() => budgets.id, {
+      onDelete: "set null",
+    }),
+    description: text("description").notNull(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    createdById: text("created_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("maintenance_records_contact_idx").on(table.contactId),
+    index("maintenance_records_budget_idx").on(table.budgetId),
   ]
 );
 
@@ -290,3 +340,7 @@ export type ItemCatalogEntry = typeof itemCatalog.$inferSelect;
 export type NewItemCatalogEntry = typeof itemCatalog.$inferInsert;
 export type CalendarEventRow = typeof calendarEvents.$inferSelect;
 export type NewCalendarEventRow = typeof calendarEvents.$inferInsert;
+export type ContactNote = typeof contactNotes.$inferSelect;
+export type NewContactNote = typeof contactNotes.$inferInsert;
+export type MaintenanceRecord = typeof maintenanceRecords.$inferSelect;
+export type NewMaintenanceRecord = typeof maintenanceRecords.$inferInsert;

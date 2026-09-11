@@ -5,7 +5,17 @@ import { notFound } from "next/navigation";
 import { PencilIcon } from "lucide-react";
 
 import { db } from "@/db";
-import { budgetItems, budgets, contactFiles, contacts, invoices } from "@/db/schema";
+import {
+  budgetItems,
+  budgets,
+  contactFiles,
+  contactNotes,
+  contacts,
+  invoices,
+  maintenanceRecords,
+  users,
+} from "@/db/schema";
+import { requireUser } from "@/lib/auth/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetStatusBadge } from "@/components/budget-status-badge";
@@ -13,6 +23,8 @@ import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
 import { formatCentsToBRL } from "@/lib/currency";
 import { ContactFormDialog } from "../contact-form-dialog";
 import { ContactFiles } from "./contact-files";
+import { ContactNotes } from "./contact-notes";
+import { MaintenanceRecords } from "./maintenance-records";
 
 export const metadata: Metadata = { title: "Contato — Arte Saunas" };
 
@@ -22,11 +34,13 @@ export default async function ContatoDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const currentUser = await requireUser();
+  const canDelete = currentUser.role === "admin" || currentUser.role === "gerente";
 
   const contact = await db.select().from(contacts).where(eq(contacts.id, id)).then((rows) => rows[0]);
   if (!contact) notFound();
 
-  const [linkedBudgets, linkedInvoices, files] = await Promise.all([
+  const [linkedBudgets, linkedInvoices, files, notes, maintenance] = await Promise.all([
     db
       .select({
         id: budgets.id,
@@ -56,6 +70,29 @@ export default async function ContatoDetailPage({
       .from(contactFiles)
       .where(eq(contactFiles.contactId, id))
       .orderBy(desc(contactFiles.createdAt)),
+    db
+      .select({
+        id: contactNotes.id,
+        body: contactNotes.body,
+        createdAt: contactNotes.createdAt,
+        createdByName: users.name,
+      })
+      .from(contactNotes)
+      .leftJoin(users, eq(users.id, contactNotes.createdById))
+      .where(eq(contactNotes.contactId, id))
+      .orderBy(desc(contactNotes.createdAt)),
+    db
+      .select({
+        id: maintenanceRecords.id,
+        description: maintenanceRecords.description,
+        occurredAt: maintenanceRecords.occurredAt,
+        budgetId: maintenanceRecords.budgetId,
+        createdByName: users.name,
+      })
+      .from(maintenanceRecords)
+      .leftJoin(users, eq(users.id, maintenanceRecords.createdById))
+      .where(eq(maintenanceRecords.contactId, id))
+      .orderBy(desc(maintenanceRecords.occurredAt)),
   ]);
 
   return (
@@ -100,7 +137,7 @@ export default async function ContatoDetailPage({
             </div>
             {contact.notes && (
               <div>
-                <p className="text-muted-foreground">Notas</p>
+                <p className="text-muted-foreground">Observação</p>
                 <p className="whitespace-pre-wrap">{contact.notes}</p>
               </div>
             )}
@@ -168,6 +205,35 @@ export default async function ContatoDetailPage({
           )}
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Anotações</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ContactNotes contactId={contact.id} notes={notes} canDelete={canDelete} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Manutenções e problemas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MaintenanceRecords
+              contactId={contact.id}
+              records={maintenance}
+              budgetOptions={linkedBudgets.map((b) => ({
+                id: b.id,
+                number: b.number,
+                title: b.title,
+              }))}
+              canDelete={canDelete}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
