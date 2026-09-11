@@ -106,55 +106,86 @@ export default async function ContatosPage({
         <SortSelect defaultValue={sortBy} />
       </form>
 
-      <Card>
-        <CardContent className="p-0">
-          {rows.length === 0 ? (
-            <p className="p-6 text-center text-sm text-muted-foreground">
-              {term
-                ? "Nenhum contato encontrado."
-                : "Nenhum contato cadastrado ainda."}
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Endereço</TableHead>
-                  <TableHead>Atualizado em</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href={`/contatos/${contact.id}`}
-                        className="hover:text-primary hover:underline"
-                      >
-                        {contact.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{contact.phone ?? "—"}</TableCell>
-                    <TableCell>{contact.email ?? "—"}</TableCell>
-                    <TableCell className="max-w-64 truncate">
-                      {contact.address ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {dateFormatter.format(contact.updatedAt)}
-                    </TableCell>
-                    <TableCell>
-                      <ContactRowMenu contact={contact} canDelete={canDelete} />
-                    </TableCell>
+      {rows.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center text-sm text-muted-foreground">
+            {term ? "Nenhum contato encontrado." : "Nenhum contato cadastrado ainda."}
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Celular: lista de cartões — a tabela fica larga demais numa tela estreita. */}
+          <div className="flex flex-col gap-3 sm:hidden">
+            {rows.map((contact) => (
+              <div
+                key={contact.id}
+                className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <Link
+                    href={`/contatos/${contact.id}`}
+                    className="font-medium hover:text-primary hover:underline"
+                  >
+                    {contact.name}
+                  </Link>
+                  <ContactRowMenu contact={contact} canDelete={canDelete} />
+                </div>
+                <div className="flex flex-col gap-0.5 text-sm text-muted-foreground">
+                  {contact.phone && <span>{contact.phone}</span>}
+                  {contact.email && <span>{contact.email}</span>}
+                  {contact.address && <span className="truncate">{contact.address}</span>}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Atualizado em {dateFormatter.format(contact.updatedAt)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Computador: tabela com todas as colunas lado a lado. */}
+          <Card className="hidden sm:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Telefone</TableHead>
+                    <TableHead>E-mail</TableHead>
+                    <TableHead>Endereço</TableHead>
+                    <TableHead>Atualizado em</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((contact) => (
+                    <TableRow key={contact.id}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/contatos/${contact.id}`}
+                          className="hover:text-primary hover:underline"
+                        >
+                          {contact.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{contact.phone ?? "—"}</TableCell>
+                      <TableCell>{contact.email ?? "—"}</TableCell>
+                      <TableCell className="max-w-64 truncate">
+                        {contact.address ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {dateFormatter.format(contact.updatedAt)}
+                      </TableCell>
+                      <TableCell>
+                        <ContactRowMenu contact={contact} canDelete={canDelete} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

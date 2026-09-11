@@ -123,74 +123,122 @@ export default async function ContratosPage({
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {rows.length === 0 ? (
-            <p className="p-6 text-center text-sm text-muted-foreground">
-              Nenhum contrato registrado ainda.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Número</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Orçamento</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">
-                      <Link href={`/contratos/${row.id}`} className="hover:underline">
-                        {row.number}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{row.contactName ?? "—"}</TableCell>
-                    <TableCell>
-                      {row.budgetNumber ? (
-                        <Link
-                          href={`/orcamentos/${row.budgetId}`}
-                          className="text-muted-foreground hover:text-foreground hover:underline"
-                        >
-                          {row.budgetNumber}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>{dateFormatter.format(row.contractDate)}</TableCell>
-                    <TableCell className="text-right">
-                      {formatCentsToBRL(row.totalCents)}
-                    </TableCell>
-                    <TableCell>
-                      <ContractStatusBadge status={row.status} />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {row.assignedToName ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <ContractRowMenu
-                        contract={row}
-                        contacts={contactList}
-                        budgets={budgetOptionList}
-                        users={allUsers}
-                        currentUserId={currentUser.id}
-                        canDelete={canDelete}
-                      />
-                    </TableCell>
+      {rows.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center text-sm text-muted-foreground">
+            Nenhum contrato registrado ainda.
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Celular: lista de cartões — a tabela fica larga demais numa tela estreita. */}
+          <div className="flex flex-col gap-3 sm:hidden">
+            {rows.map((row) => (
+              <div
+                key={row.id}
+                className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <Link href={`/contratos/${row.id}`} className="font-medium hover:underline">
+                    {row.number}
+                  </Link>
+                  <div className="flex items-center gap-1">
+                    <ContractStatusBadge status={row.status} />
+                    <ContractRowMenu
+                      contract={row}
+                      contacts={contactList}
+                      budgets={budgetOptionList}
+                      users={allUsers}
+                      currentUserId={currentUser.id}
+                      canDelete={canDelete}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted-foreground">{row.contactName ?? "—"}</span>
+                  <span className="font-medium">{formatCentsToBRL(row.totalCents)}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <span>{dateFormatter.format(row.contractDate)}</span>
+                  {row.budgetNumber && (
+                    <Link
+                      href={`/orcamentos/${row.budgetId}`}
+                      className="hover:text-foreground hover:underline"
+                    >
+                      Orç. {row.budgetNumber}
+                    </Link>
+                  )}
+                  {row.assignedToName && <span>Resp.: {row.assignedToName}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Computador: tabela com todas as colunas lado a lado. */}
+          <Card className="hidden sm:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Orçamento</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Responsável</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="font-medium">
+                        <Link href={`/contratos/${row.id}`} className="hover:underline">
+                          {row.number}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{row.contactName ?? "—"}</TableCell>
+                      <TableCell>
+                        {row.budgetNumber ? (
+                          <Link
+                            href={`/orcamentos/${row.budgetId}`}
+                            className="text-muted-foreground hover:text-foreground hover:underline"
+                          >
+                            {row.budgetNumber}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell>{dateFormatter.format(row.contractDate)}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCentsToBRL(row.totalCents)}
+                      </TableCell>
+                      <TableCell>
+                        <ContractStatusBadge status={row.status} />
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {row.assignedToName ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <ContractRowMenu
+                          contract={row}
+                          contacts={contactList}
+                          budgets={budgetOptionList}
+                          users={allUsers}
+                          currentUserId={currentUser.id}
+                          canDelete={canDelete}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }
