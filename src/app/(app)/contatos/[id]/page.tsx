@@ -11,6 +11,7 @@ import {
   contactFiles,
   contactNotes,
   contacts,
+  contracts,
   invoices,
   maintenanceRecords,
   users,
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetStatusBadge } from "@/components/budget-status-badge";
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
+import { ContractStatusBadge } from "@/components/contract-status-badge";
 import { formatCentsToBRL } from "@/lib/currency";
 import { ContactFormDialog } from "../contact-form-dialog";
 import { ContactFiles } from "./contact-files";
@@ -40,7 +42,7 @@ export default async function ContatoDetailPage({
   const contact = await db.select().from(contacts).where(eq(contacts.id, id)).then((rows) => rows[0]);
   if (!contact) notFound();
 
-  const [linkedBudgets, linkedInvoices, files, notes, maintenance] = await Promise.all([
+  const [linkedBudgets, linkedInvoices, linkedContracts, files, notes, maintenance] = await Promise.all([
     db
       .select({
         id: budgets.id,
@@ -65,6 +67,17 @@ export default async function ContatoDetailPage({
       .from(invoices)
       .where(eq(invoices.contactId, id))
       .orderBy(desc(invoices.issueDate)),
+    db
+      .select({
+        id: contracts.id,
+        number: contracts.number,
+        contractDate: contracts.contractDate,
+        totalCents: contracts.totalCents,
+        status: contracts.status,
+      })
+      .from(contracts)
+      .where(eq(contracts.contactId, id))
+      .orderBy(desc(contracts.contractDate)),
     db
       .select()
       .from(contactFiles)
@@ -199,6 +212,35 @@ export default async function ContatoDetailPage({
                     {formatCentsToBRL(invoice.totalCents)}
                   </span>
                   <InvoiceStatusBadge status={invoice.status} />
+                </div>
+              </Link>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Contratos</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-1">
+          {linkedContracts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum contrato registrado para este contato ainda.
+            </p>
+          ) : (
+            linkedContracts.map((contract) => (
+              <Link
+                key={contract.id}
+                href={`/contratos/${contract.id}`}
+                className="flex items-center justify-between gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent/60"
+              >
+                <span className="font-medium">{contract.number}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-muted-foreground">
+                    {formatCentsToBRL(contract.totalCents)}
+                  </span>
+                  <ContractStatusBadge status={contract.status} />
                 </div>
               </Link>
             ))

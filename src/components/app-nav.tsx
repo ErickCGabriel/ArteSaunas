@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboardIcon,
   FileTextIcon,
+  FileSignatureIcon,
   UsersIcon,
   CalendarIcon,
   ShieldIcon,
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/", label: "Painel", icon: LayoutDashboardIcon, exact: true },
   { href: "/orcamentos", label: "Orçamentos", icon: FileTextIcon },
+  { href: "/contratos", label: "Contratos", icon: FileSignatureIcon },
   { href: "/catalogo", label: "Catálogo", icon: PackageIcon },
   { href: "/notas-fiscais", label: "Notas Fiscais", icon: ReceiptIcon },
   { href: "/contatos", label: "Contatos", icon: UsersIcon },

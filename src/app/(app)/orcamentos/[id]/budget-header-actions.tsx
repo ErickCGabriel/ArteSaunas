@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DownloadIcon, MessageCircleIcon, ReceiptIcon, Trash2Icon } from "lucide-react";
+import {
+  DownloadIcon,
+  FileSignatureIcon,
+  MessageCircleIcon,
+  ReceiptIcon,
+  Trash2Icon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
@@ -62,6 +68,12 @@ export function BudgetHeaderActions({
           Enviar por WhatsApp
         </Button>
       )}
+      <Button variant="outline" asChild>
+        <Link href={`/contratos?novo=${budgetId}`}>
+          <FileSignatureIcon className="size-4" />
+          Gerar Contrato
+        </Link>
+      </Button>
       <Button variant="outline" asChild>
         <Link href={`/notas-fiscais?novo=${budgetId}`}>
           <ReceiptIcon className="size-4" />

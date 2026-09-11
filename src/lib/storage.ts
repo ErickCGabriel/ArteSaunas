@@ -89,3 +89,20 @@ export function getInvoiceFileBuffer(invoiceId: string, storedName: string) {
 export function removeInvoiceFile(invoiceId: string, storedName: string) {
   return removeFile(objectKey("invoices", invoiceId, storedName));
 }
+
+export function putContractFile(
+  contractId: string,
+  storedName: string,
+  data: Buffer,
+  contentType: string
+) {
+  return putFile(objectKey("contracts", contractId, storedName), data, contentType);
+}
+
+export function getContractFileBuffer(contractId: string, storedName: string) {
+  return getFileBuffer(objectKey("contracts", contractId, storedName));
+}
+
+export function removeContractFile(contractId: string, storedName: string) {
+  return removeFile(objectKey("contracts", contractId, storedName));
+}

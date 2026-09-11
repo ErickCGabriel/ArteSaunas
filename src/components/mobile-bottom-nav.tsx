@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarIcon,
+  FileSignatureIcon,
   FileTextIcon,
   LayoutDashboardIcon,
   MoreHorizontalIcon,
@@ -29,6 +30,7 @@ const primaryLinks = [
 ];
 
 const overflowLinks = [
+  { href: "/contratos", label: "Contratos", icon: FileSignatureIcon },
   { href: "/notas-fiscais", label: "Notas Fiscais", icon: ReceiptIcon },
   { href: "/catalogo", label: "Catálogo", icon: PackageIcon },
 ];

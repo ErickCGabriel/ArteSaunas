@@ -274,6 +274,65 @@ export const invoiceFiles = pgTable(
   (table) => [index("invoice_files_invoice_idx").on(table.invoiceId)]
 );
 
+export const contracts = pgTable(
+  "contracts",
+  {
+    id: text("id").primaryKey(),
+    // Número interno do contrato, gerado automaticamente (CTR-AAAA-NNNN) —
+    // diferente da nota fiscal, não precisa bater com nenhum sistema externo.
+    number: text("number").notNull().unique(),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "restrict" }),
+    // Orçamento de origem — opcional, mesma lógica da nota fiscal.
+    budgetId: text("budget_id").references(() => budgets.id, {
+      onDelete: "set null",
+    }),
+    contractDate: timestamp("contract_date", { withTimezone: true }).notNull(),
+    totalCents: integer("total_cents").notNull().default(0),
+    status: text("status", { enum: ["pendente", "assinado", "cancelado"] })
+      .notNull()
+      .default("pendente"),
+    notes: text("notes"),
+    createdById: text("created_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    // Quem da equipe está cuidando desse contrato — nem sempre é quem
+    // registrou.
+    assignedToId: text("assigned_to_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    ...timestamps,
+  },
+  (table) => [
+    index("contracts_contact_idx").on(table.contactId),
+    index("contracts_budget_idx").on(table.budgetId),
+    index("contracts_status_idx").on(table.status),
+    index("contracts_assigned_to_idx").on(table.assignedToId),
+  ]
+);
+
+export const contractFiles = pgTable(
+  "contract_files",
+  {
+    id: text("id").primaryKey(),
+    contractId: text("contract_id")
+      .notNull()
+      .references(() => contracts.id, { onDelete: "cascade" }),
+    storedName: text("stored_name").notNull(),
+    originalName: text("original_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    uploadedById: text("uploaded_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("contract_files_contract_idx").on(table.contractId)]
+);
+
 export const itemCatalog = pgTable(
   "item_catalog",
   {
@@ -336,6 +395,10 @@ export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 export type InvoiceFile = typeof invoiceFiles.$inferSelect;
 export type NewInvoiceFile = typeof invoiceFiles.$inferInsert;
+export type Contract = typeof contracts.$inferSelect;
+export type NewContract = typeof contracts.$inferInsert;
+export type ContractFile = typeof contractFiles.$inferSelect;
+export type NewContractFile = typeof contractFiles.$inferInsert;
 export type ItemCatalogEntry = typeof itemCatalog.$inferSelect;
 export type NewItemCatalogEntry = typeof itemCatalog.$inferInsert;
 export type CalendarEventRow = typeof calendarEvents.$inferSelect;

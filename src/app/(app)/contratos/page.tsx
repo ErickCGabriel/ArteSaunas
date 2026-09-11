@@ -1,0 +1,196 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { asc, desc, eq, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
+import { PlusIcon } from "lucide-react";
+
+import { db } from "@/db";
+import { budgetItems, budgets, contacts, contracts, users } from "@/db/schema";
+import { requireUser } from "@/lib/auth/current-user";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatCentsToBRL } from "@/lib/currency";
+import { ContractStatusBadge } from "@/components/contract-status-badge";
+import { MineFilterToggle } from "@/components/mine-filter-toggle";
+import { ContractFormDialog } from "./contract-form-dialog";
+import { ContractRowMenu } from "./contract-row-menu";
+
+export const metadata: Metadata = { title: "Contratos — Arte Saunas" };
+
+const assignedUsers = alias(users, "assigned_users");
+
+export default async function ContratosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ novo?: string; mine?: string }>;
+}) {
+  const { novo, mine: mineParam } = await searchParams;
+  const currentUser = await requireUser();
+  const canDelete = currentUser.role === "admin" || currentUser.role === "gerente";
+  const mine = mineParam === "1";
+
+  const [allUsers, rows, contactList, budgetOptions] = await Promise.all([
+    db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(eq(users.active, true))
+      .orderBy(asc(users.name)),
+    db
+      .select({
+        id: contracts.id,
+        number: contracts.number,
+        contactId: contracts.contactId,
+        budgetId: contracts.budgetId,
+        contractDate: contracts.contractDate,
+        totalCents: contracts.totalCents,
+        status: contracts.status,
+        notes: contracts.notes,
+        assignedToId: contracts.assignedToId,
+        budgetNumber: budgets.number,
+        contactName: contacts.name,
+        assignedToName: assignedUsers.name,
+      })
+      .from(contracts)
+      .leftJoin(contacts, eq(contacts.id, contracts.contactId))
+      .leftJoin(budgets, eq(budgets.id, contracts.budgetId))
+      .leftJoin(assignedUsers, eq(assignedUsers.id, contracts.assignedToId))
+      .where(mine ? eq(contracts.assignedToId, currentUser.id) : undefined)
+      .orderBy(desc(contracts.contractDate)),
+    db.select({ id: contacts.id, name: contacts.name }).from(contacts).orderBy(asc(contacts.name)),
+    db
+      .select({
+        id: budgets.id,
+        number: budgets.number,
+        title: budgets.title,
+        contactId: budgets.contactId,
+        contactName: contacts.name,
+        totalCents: sql<number>`coalesce(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0)`,
+      })
+      .from(budgets)
+      .leftJoin(contacts, eq(contacts.id, budgets.contactId))
+      .leftJoin(budgetItems, eq(budgetItems.budgetId, budgets.id))
+      .groupBy(budgets.id, contacts.name)
+      .orderBy(asc(budgets.number)),
+  ]);
+
+  const budgetOptionList = budgetOptions.map((b) => ({
+    id: b.id,
+    number: b.number,
+    title: b.title,
+    contactId: b.contactId,
+    contactName: b.contactName,
+    totalCents: Number(b.totalCents ?? 0),
+  }));
+
+  const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+  });
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Contratos</h1>
+          <p className="text-muted-foreground">
+            Contratos de instalação assinados pelos clientes, vinculados aos orçamentos.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <MineFilterToggle mine={mine} basePath="/contratos" />
+          <ContractFormDialog
+            contacts={contactList}
+            budgets={budgetOptionList}
+            users={allUsers}
+            currentUserId={currentUser.id}
+            defaultBudgetId={novo}
+            defaultOpen={Boolean(novo)}
+            trigger={
+              <Button>
+                <PlusIcon className="size-4" />
+                Novo contrato
+              </Button>
+            }
+          />
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {rows.length === 0 ? (
+            <p className="p-6 text-center text-sm text-muted-foreground">
+              Nenhum contrato registrado ainda.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Orçamento</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Responsável</TableHead>
+                  <TableHead className="w-10" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="font-medium">
+                      <Link href={`/contratos/${row.id}`} className="hover:underline">
+                        {row.number}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{row.contactName ?? "—"}</TableCell>
+                    <TableCell>
+                      {row.budgetNumber ? (
+                        <Link
+                          href={`/orcamentos/${row.budgetId}`}
+                          className="text-muted-foreground hover:text-foreground hover:underline"
+                        >
+                          {row.budgetNumber}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>{dateFormatter.format(row.contractDate)}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCentsToBRL(row.totalCents)}
+                    </TableCell>
+                    <TableCell>
+                      <ContractStatusBadge status={row.status} />
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {row.assignedToName ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      <ContractRowMenu
+                        contract={row}
+                        contacts={contactList}
+                        budgets={budgetOptionList}
+                        users={allUsers}
+                        currentUserId={currentUser.id}
+                        canDelete={canDelete}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
