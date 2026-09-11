@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { or, ilike, asc, desc } from "drizzle-orm";
-import { PlusIcon, SearchIcon } from "lucide-react";
+import { DownloadIcon, PlusIcon, SearchIcon, UploadIcon } from "lucide-react";
 
 import { db } from "@/db";
 import { contacts } from "@/db/schema";
@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ContactFormDialog } from "./contact-form-dialog";
+import { ContactImportDialog } from "./contact-import-dialog";
 import { ContactRowMenu } from "./contact-row-menu";
 import { SortSelect } from "./sort-select";
 
@@ -66,14 +67,30 @@ export default async function ContatosPage({
             Clientes e outros contatos da Arte Saunas.
           </p>
         </div>
-        <ContactFormDialog
-          trigger={
-            <Button>
-              <PlusIcon className="size-4" />
-              Novo contato
-            </Button>
-          }
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" asChild>
+            <a href="/api/contatos/export" download>
+              <DownloadIcon className="size-4" />
+              Exportar
+            </a>
+          </Button>
+          <ContactImportDialog
+            trigger={
+              <Button variant="outline">
+                <UploadIcon className="size-4" />
+                Importar
+              </Button>
+            }
+          />
+          <ContactFormDialog
+            trigger={
+              <Button>
+                <PlusIcon className="size-4" />
+                Novo contato
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       <form className="flex flex-wrap items-center gap-2">
