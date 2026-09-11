@@ -9,6 +9,11 @@ import {
   deleteCalendarEvent,
   updateCalendarEvent,
 } from "@/lib/google/calendar";
+import {
+  removeCachedEvent,
+  syncCalendarEventsCache,
+  upsertCachedEvent,
+} from "@/lib/google/calendar-sync";
 import { clearGoogleConnection } from "@/lib/google/settings";
 import { localDateTimeToUTC } from "@/lib/timezone";
 
@@ -76,9 +81,12 @@ export async function createEvent(
   }
 
   try {
-    await createCalendarEvent({
+    const dto = await createCalendarEvent({
       ...parsed.data,
       assignedToId: parsed.data.assignedToId ?? user.id,
+    });
+    await upsertCachedEvent(dto).catch((error) => {
+      console.error("Falha ao atualizar a cópia local do evento:", error);
     });
   } catch (error) {
     return { error: (error as Error).message };
@@ -100,9 +108,12 @@ export async function updateEvent(
   }
 
   try {
-    await updateCalendarEvent(eventId, {
+    const dto = await updateCalendarEvent(eventId, {
       ...parsed.data,
       assignedToId: parsed.data.assignedToId ?? user.id,
+    });
+    await upsertCachedEvent(dto).catch((error) => {
+      console.error("Falha ao atualizar a cópia local do evento:", error);
     });
   } catch (error) {
     return { error: (error as Error).message };
@@ -119,6 +130,9 @@ export async function deleteEvent(
 
   try {
     await deleteCalendarEvent(eventId);
+    await removeCachedEvent(eventId).catch((error) => {
+      console.error("Falha ao remover a cópia local do evento:", error);
+    });
   } catch (error) {
     return { error: (error as Error).message };
   }
@@ -132,4 +146,18 @@ export async function disconnectGoogleCalendar(): Promise<{ error?: string }> {
   await clearGoogleConnection();
   revalidatePath("/calendario");
   return {};
+}
+
+export type SyncCalendarState = { error?: string; count?: number };
+
+export async function syncCalendar(): Promise<SyncCalendarState> {
+  await requireUser();
+
+  try {
+    const count = await syncCalendarEventsCache();
+    revalidatePath("/calendario");
+    return { count };
+  } catch (error) {
+    return { error: (error as Error).message };
+  }
 }

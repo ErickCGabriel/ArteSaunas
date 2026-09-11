@@ -227,6 +227,28 @@ export const itemCatalog = pgTable(
   (table) => [index("item_catalog_description_idx").on(table.description)]
 );
 
+// Cópia local (somente leitura pro resto do app) dos eventos do Google
+// Calendar, pra listar/filtrar o calendário sem depender da API do Google a
+// cada clique — só é escrita ao criar/editar/excluir um evento (fica em dia
+// na hora) e ao rodar uma sincronização manual (botão "Sincronizar", pega o
+// que mudou direto no Google fora do app).
+export const calendarEvents = pgTable(
+  "calendar_events",
+  {
+    id: text("id").primaryKey(), // id do evento no Google Calendar
+    title: text("title").notNull(),
+    description: text("description"),
+    address: text("address"),
+    startAt: timestamp("start_at", { withTimezone: true }).notNull(),
+    endAt: timestamp("end_at", { withTimezone: true }).notNull(),
+    contactId: text("contact_id"),
+    budgetId: text("budget_id"),
+    assignedToId: text("assigned_to_id"),
+    ...timestamps,
+  },
+  (table) => [index("calendar_events_start_idx").on(table.startAt)]
+);
+
 // Single-row-per-key store for small pieces of app config (Google OAuth
 // tokens, connected calendar id, etc.) that don't warrant their own table.
 export const appSettings = pgTable("app_settings", {
@@ -255,3 +277,5 @@ export type InvoiceFile = typeof invoiceFiles.$inferSelect;
 export type NewInvoiceFile = typeof invoiceFiles.$inferInsert;
 export type ItemCatalogEntry = typeof itemCatalog.$inferSelect;
 export type NewItemCatalogEntry = typeof itemCatalog.$inferInsert;
+export type CalendarEventRow = typeof calendarEvents.$inferSelect;
+export type NewCalendarEventRow = typeof calendarEvents.$inferInsert;

@@ -2,7 +2,11 @@ import "server-only";
 
 import { google, type calendar_v3 } from "googleapis";
 
-import { getGoogleRefreshToken } from "./settings";
+import {
+  getCachedGoogleAccessToken,
+  getGoogleRefreshToken,
+  saveCachedGoogleAccessToken,
+} from "./settings";
 
 const APP_SOURCE = "artesaunas";
 const TIME_ZONE = "America/Sao_Paulo";
@@ -56,7 +60,24 @@ async function getAuthorizedClient() {
   if (!refreshToken) return null;
 
   const client = getOAuthClient();
-  client.setCredentials({ refresh_token: refreshToken });
+
+  // Reusar um access token válido evita trocar o refresh token por um novo a
+  // cada chamada (uma ida e volta a mais pro Google em toda requisição).
+  const cached = await getCachedGoogleAccessToken();
+  const stillValid = cached && cached.expiryDate > Date.now() + 60_000;
+  client.setCredentials({
+    refresh_token: refreshToken,
+    ...(stillValid
+      ? { access_token: cached.accessToken, expiry_date: cached.expiryDate }
+      : {}),
+  });
+
+  client.on("tokens", (tokens) => {
+    if (tokens.access_token && tokens.expiry_date) {
+      void saveCachedGoogleAccessToken(tokens.access_token, tokens.expiry_date);
+    }
+  });
+
   return client;
 }
 
@@ -145,6 +166,43 @@ export async function listCalendarEventsInRange(
   });
 
   return (data.items ?? []).map(toDto);
+}
+
+const SYNC_PAST_MS = 365 * 24 * 60 * 60 * 1000; // 1 ano
+const SYNC_FUTURE_MS = 2 * 365 * 24 * 60 * 60 * 1000; // 2 anos
+
+/**
+ * Busca todos os eventos do app (paginando), de um ano atrás a dois anos à
+ * frente — usado só pela sincronização manual, nunca na navegação normal do
+ * calendário (que lê a cópia local em vez de chamar a API a cada clique).
+ */
+export async function fetchAllAppEvents(): Promise<CalendarEventDto[]> {
+  const client = await getAuthorizedClient();
+  if (!client) throw new Error("Google Calendar não conectado.");
+
+  const calendar = google.calendar({ version: "v3", auth: client });
+  const now = Date.now();
+
+  const events: CalendarEventDto[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const { data } = await calendar.events.list({
+      calendarId: getCalendarId(),
+      timeMin: new Date(now - SYNC_PAST_MS).toISOString(),
+      timeMax: new Date(now + SYNC_FUTURE_MS).toISOString(),
+      singleEvents: true,
+      orderBy: "startTime",
+      privateExtendedProperty: [`appSource=${APP_SOURCE}`],
+      maxResults: 250,
+      pageToken,
+    });
+
+    events.push(...(data.items ?? []).map(toDto));
+    pageToken = data.nextPageToken ?? undefined;
+  } while (pageToken);
+
+  return events;
 }
 
 export async function createCalendarEvent(

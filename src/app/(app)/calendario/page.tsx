@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, gte, lt } from "drizzle-orm";
 import { CalendarIcon, PlusIcon } from "lucide-react";
 
 import { db } from "@/db";
-import { budgets, contacts, users } from "@/db/schema";
+import { budgets, calendarEvents, contacts, users, type CalendarEventRow } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
-import { listCalendarEventsInRange, type CalendarEventDto } from "@/lib/google/calendar";
-import { getGoogleAccountEmail, isGoogleConnected } from "@/lib/google/settings";
+import { syncCalendarEventsCache } from "@/lib/google/calendar-sync";
+import {
+  getCalendarLastSyncedAt,
+  getGoogleAccountEmail,
+  isGoogleConnected,
+} from "@/lib/google/settings";
 import { APP_TIME_ZONE, toLocalDateKey } from "@/lib/timezone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,8 +19,17 @@ import { EventRow } from "./event-row";
 import { GoogleConnectionCard } from "./google-connection-card";
 import { CalendarGrid } from "./calendar-grid";
 import { CalendarViewToggle } from "./calendar-view-toggle";
+import { SyncButton } from "./sync-button";
 import { TeamStatusCard } from "./team-status-card";
 import { buildMonthGrid, parseMonthParam } from "./date-grid";
+
+const lastSyncedFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: APP_TIME_ZONE,
+  day: "2-digit",
+  month: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 export const metadata: Metadata = { title: "Calendário — Arte Saunas" };
 
@@ -26,8 +39,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   exchange: "Não foi possível concluir a conexão com o Google. Tente novamente.",
 };
 
-function groupEventsByDay(events: CalendarEventDto[]) {
-  const map = new Map<string, CalendarEventDto[]>();
+function groupEventsByDay(events: CalendarEventRow[]) {
+  const map = new Map<string, CalendarEventRow[]>();
   for (const event of events) {
     const key = toLocalDateKey(event.startAt);
     const list = map.get(key);
@@ -53,6 +66,7 @@ export default async function CalendarioPage({
   const connected = await isGoogleConnected();
   const canManage = user.role === "admin" || user.role === "gerente";
   const view: "individual" | "equipe" = viewParam === "individual" ? "individual" : "equipe";
+  const lastSyncedAt = connected ? await getCalendarLastSyncedAt() : null;
 
   const [contactList, budgetList, userList] = await Promise.all([
     db
@@ -92,10 +106,18 @@ export default async function CalendarioPage({
           <p className="text-muted-foreground">
             Visitas, instalações e manutenções sincronizadas com o Google Calendar.
           </p>
+          {connected && (
+            <p className="text-xs text-muted-foreground">
+              {lastSyncedAt
+                ? `Sincronizado em ${lastSyncedFormatter.format(new Date(lastSyncedAt))}`
+                : "Ainda não sincronizado"}
+            </p>
+          )}
         </div>
         {connected && (
           <div className="flex flex-wrap items-center gap-2">
             <CalendarViewToggle view={view} monthKey={grid.monthKey} dayKey={selectedDayKey} />
+            <SyncButton />
             <EventFormDialog
               contacts={contactOptions}
               budgets={budgetOptions}
@@ -198,13 +220,29 @@ async function CalendarBody({
   view: "individual" | "equipe";
   canDelete: boolean;
 }) {
-  let allEvents: CalendarEventDto[] = [];
+  let allEvents: CalendarEventRow[] = [];
   let loadError = false;
 
   try {
-    allEvents = (await listCalendarEventsInRange(grid.rangeStart, grid.rangeEnd)) ?? [];
+    // Primeiro acesso depois de conectar: ainda não existe cópia local, faz
+    // uma sincronização inicial só dessa vez. Depois disso, a leitura é
+    // sempre local — não chama o Google a cada clique/navegação.
+    if ((await getCalendarLastSyncedAt()) === null) {
+      await syncCalendarEventsCache();
+    }
+
+    allEvents = await db
+      .select()
+      .from(calendarEvents)
+      .where(
+        and(
+          gte(calendarEvents.startAt, grid.rangeStart),
+          lt(calendarEvents.startAt, grid.rangeEnd)
+        )
+      )
+      .orderBy(asc(calendarEvents.startAt));
   } catch (error) {
-    console.error("Falha ao buscar eventos do Google Calendar:", error);
+    console.error("Falha ao carregar os eventos do calendário:", error);
     loadError = true;
   }
 
@@ -212,7 +250,7 @@ async function CalendarBody({
     return (
       <Card className="border-destructive/40 bg-destructive/10">
         <CardContent className="p-4 text-sm">
-          Não foi possível carregar os eventos do Google Calendar agora. Se o
+          Não foi possível carregar os eventos do calendário agora. Se o
           problema persistir, reconecte a conta em &quot;Desconectar&quot; e
           conecte novamente.
         </CardContent>

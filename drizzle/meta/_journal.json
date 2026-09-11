@@ -78,6 +78,13 @@
       "when": 1789131644074,
       "tag": "0010_slippery_purifiers",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789134949007,
+      "tag": "0011_glamorous_wolfpack",
+      "breakpoints": true
     }
   ]
 }
