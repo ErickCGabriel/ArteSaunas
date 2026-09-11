@@ -74,65 +74,100 @@ export default async function OrcamentosPage({
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {rows.length === 0 ? (
-            <p className="p-6 text-center text-sm text-muted-foreground">
-              Nenhum orçamento cadastrado ainda.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Número</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href={`/orcamentos/${row.id}`}
-                        className="block"
-                      >
-                        {row.number}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/orcamentos/${row.id}`} className="block">
-                        {row.contactName ?? "—"}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/orcamentos/${row.id}`} className="block">
-                        {row.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <Link href={`/orcamentos/${row.id}`} className="block">
-                        {row.assignedToName ?? "—"}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <BudgetStatusBadge status={row.status} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/orcamentos/${row.id}`} className="block">
-                        {formatCentsToBRL(Number(row.total ?? 0))}
-                      </Link>
-                    </TableCell>
+      {rows.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center text-sm text-muted-foreground">
+            Nenhum orçamento cadastrado ainda.
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Celular: lista de cartões — a tabela fica larga demais numa tela estreita. */}
+          <div className="flex flex-col gap-3 sm:hidden">
+            {rows.map((row) => (
+              <Link
+                key={row.id}
+                href={`/orcamentos/${row.id}`}
+                className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:bg-accent/40"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">{row.number}</span>
+                    <span className="font-medium">{row.title}</span>
+                  </div>
+                  <BudgetStatusBadge status={row.status} />
+                </div>
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted-foreground">{row.contactName ?? "—"}</span>
+                  <span className="font-medium">
+                    {formatCentsToBRL(Number(row.total ?? 0))}
+                  </span>
+                </div>
+                {row.assignedToName && (
+                  <span className="text-xs text-muted-foreground">
+                    Responsável: {row.assignedToName}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {/* Computador: tabela com todas as colunas lado a lado. */}
+          <Card className="hidden sm:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Título</TableHead>
+                    <TableHead>Responsável</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/orcamentos/${row.id}`}
+                          className="block"
+                        >
+                          {row.number}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Link href={`/orcamentos/${row.id}`} className="block">
+                          {row.contactName ?? "—"}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Link href={`/orcamentos/${row.id}`} className="block">
+                          {row.title}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <Link href={`/orcamentos/${row.id}`} className="block">
+                          {row.assignedToName ?? "—"}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <BudgetStatusBadge status={row.status} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/orcamentos/${row.id}`} className="block">
+                          {formatCentsToBRL(Number(row.total ?? 0))}
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }
