@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { desc, eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { PencilIcon } from "lucide-react";
+import { PencilIcon, PhoneIcon } from "lucide-react";
 
 import { db } from "@/db";
 import {
@@ -24,6 +24,7 @@ import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
 import { ContractStatusBadge } from "@/components/contract-status-badge";
 import { PageHeader } from "@/components/page-header";
 import { formatCentsToBRL } from "@/lib/currency";
+import { toTelHref } from "@/lib/phone";
 import { ContactFormDialog } from "../contact-form-dialog";
 import { ContactFiles } from "./contact-files";
 import { ContactNotes } from "./contact-notes";
@@ -42,6 +43,8 @@ export default async function ContatoDetailPage({
 
   const contact = await db.select().from(contacts).where(eq(contacts.id, id)).then((rows) => rows[0]);
   if (!contact) notFound();
+
+  const telHref = contact.phone ? toTelHref(contact.phone) : null;
 
   const [linkedBudgets, linkedInvoices, linkedContracts, files, notes, maintenance] = await Promise.all([
     db
@@ -115,15 +118,25 @@ export default async function ContatoDetailPage({
         title={contact.name}
         description={[contact.phone, contact.email].filter(Boolean).join(" · ") || "—"}
         actions={
-          <ContactFormDialog
-            contact={contact}
-            trigger={
-              <Button variant="outline">
-                <PencilIcon className="size-4" />
-                Editar
+          <>
+            {telHref && (
+              <Button variant="outline" asChild>
+                <a href={telHref}>
+                  <PhoneIcon className="size-4" />
+                  Ligar
+                </a>
               </Button>
-            }
-          />
+            )}
+            <ContactFormDialog
+              contact={contact}
+              trigger={
+                <Button variant="outline">
+                  <PencilIcon className="size-4" />
+                  Editar
+                </Button>
+              }
+            />
+          </>
         }
       />
 
@@ -135,7 +148,13 @@ export default async function ContatoDetailPage({
           <CardContent className="flex flex-col gap-3 text-sm">
             <div>
               <p className="text-muted-foreground">Telefone</p>
-              <p>{contact.phone ?? "—"}</p>
+              {telHref ? (
+                <a href={telHref} className="text-primary hover:underline">
+                  {contact.phone}
+                </a>
+              ) : (
+                <p>{contact.phone ?? "—"}</p>
+              )}
             </div>
             <div>
               <p className="text-muted-foreground">E-mail</p>

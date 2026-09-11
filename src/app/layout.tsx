@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -24,8 +24,20 @@ export const metadata: Metadata = {
   description: "Sistema de gestão da Arte Saunas: orçamentos, contatos e agenda.",
   icons: {
     icon: "/favicon.ico",
-    apple: "/icon-mark.png",
+    apple: "/apple-touch-icon.png",
   },
+  appleWebApp: {
+    capable: true,
+    title: "Arte Saunas",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#120c09",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({

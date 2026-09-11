@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { or, ilike, asc, desc } from "drizzle-orm";
-import { DownloadIcon, PlusIcon, SearchIcon, UploadIcon } from "lucide-react";
+import { DownloadIcon, PhoneIcon, PlusIcon, SearchIcon, UploadIcon } from "lucide-react";
 
 import { db } from "@/db";
 import { contacts } from "@/db/schema";
@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/page-header";
+import { toTelHref } from "@/lib/phone";
 import { ContactFormDialog } from "./contact-form-dialog";
 import { ContactImportDialog } from "./contact-import-dialog";
 import { ContactRowMenu } from "./contact-row-menu";
@@ -127,7 +128,16 @@ export default async function ContatosPage({
                   >
                     {contact.name}
                   </Link>
-                  <ContactRowMenu contact={contact} canDelete={canDelete} />
+                  <div className="flex items-center gap-1">
+                    {contact.phone && toTelHref(contact.phone) && (
+                      <Button variant="ghost" size="icon" className="size-8" asChild>
+                        <a href={toTelHref(contact.phone)!} aria-label={`Ligar para ${contact.name}`}>
+                          <PhoneIcon className="size-4" />
+                        </a>
+                      </Button>
+                    )}
+                    <ContactRowMenu contact={contact} canDelete={canDelete} />
+                  </div>
                 </div>
                 <div className="flex flex-col gap-0.5 text-sm text-muted-foreground">
                   {contact.phone && <span>{contact.phone}</span>}
@@ -166,7 +176,15 @@ export default async function ContatosPage({
                           {contact.name}
                         </Link>
                       </TableCell>
-                      <TableCell>{contact.phone ?? "—"}</TableCell>
+                      <TableCell>
+                        {contact.phone && toTelHref(contact.phone) ? (
+                          <a href={toTelHref(contact.phone)!} className="hover:text-primary hover:underline">
+                            {contact.phone}
+                          </a>
+                        ) : (
+                          contact.phone ?? "—"
+                        )}
+                      </TableCell>
                       <TableCell>{contact.email ?? "—"}</TableCell>
                       <TableCell className="max-w-64 truncate">
                         {contact.address ?? "—"}
