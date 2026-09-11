@@ -37,11 +37,13 @@ export function InvoiceHeaderActions({
   status,
   contacts,
   budgets,
+  canDelete,
 }: {
   invoice: InvoiceData;
   status: Invoice["status"];
   contacts: ContactOption[];
   budgets: BudgetOption[];
+  canDelete: boolean;
 }) {
   const router = useRouter();
   const [isTogglePending, startToggleTransition] = useTransition();
@@ -75,19 +77,21 @@ export function InvoiceHeaderActions({
         <PowerIcon className="size-4" />
         {status === "emitida" ? "Cancelar" : "Reativar"}
       </Button>
-      <ConfirmDeleteButton
-        id={invoice.id}
-        action={deleteInvoice}
-        title="Excluir nota fiscal"
-        description={`Tem certeza que deseja excluir o registro da nota fiscal ${invoice.number}? Essa ação não pode ser desfeita.`}
-        onSuccess={() => router.push("/notas-fiscais")}
-        trigger={
-          <Button variant="outline">
-            <Trash2Icon className="size-4" />
-            Excluir
-          </Button>
-        }
-      />
+      {canDelete && (
+        <ConfirmDeleteButton
+          id={invoice.id}
+          action={deleteInvoice}
+          title="Excluir nota fiscal"
+          description={`Tem certeza que deseja excluir o registro da nota fiscal ${invoice.number}? Essa ação não pode ser desfeita.`}
+          onSuccess={() => router.push("/notas-fiscais")}
+          trigger={
+            <Button variant="outline">
+              <Trash2Icon className="size-4" />
+              Excluir
+            </Button>
+          }
+        />
+      )}
     </div>
   );
 }

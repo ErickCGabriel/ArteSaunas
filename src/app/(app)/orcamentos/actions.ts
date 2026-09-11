@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import { budgetFiles, budgetItems, budgets, type Budget } from "@/db/schema";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireManager, requireUser } from "@/lib/auth/current-user";
 import { putBudgetFile, removeBudgetFile } from "@/lib/storage";
 
 const itemSchema = z.object({
@@ -228,7 +228,7 @@ export async function updateBudgetStatus(
 }
 
 export async function deleteBudget(id: string): Promise<{ error?: string }> {
-  await requireUser();
+  await requireManager();
   await db.delete(budgets).where(eq(budgets.id, id));
   revalidatePath("/orcamentos");
   return {};

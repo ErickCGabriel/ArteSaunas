@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import { budgets, contacts } from "@/db/schema";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireManager, requireUser } from "@/lib/auth/current-user";
 
 const contactSchema = z
   .object({
@@ -91,7 +91,7 @@ export async function updateContact(
 }
 
 export async function deleteContact(id: string): Promise<{ error?: string }> {
-  await requireUser();
+  await requireManager();
 
   const linkedBudget = await db
     .select({ id: budgets.id })

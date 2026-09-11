@@ -15,7 +15,7 @@ agenda integrada ao Google Calendar.
 - **Next.js** (App Router) + TypeScript + Tailwind + shadcn/ui (tema escuro/premium)
 - **Postgres** (Supabase, por enquanto) via Drizzle ORM
 - Autenticação por sessão (cookie assinado, sistema próprio — **não** usa
-  Supabase Auth), papéis **Admin** e **Operador**
+  Supabase Auth), papéis **Admin**, **Gerente** e **Analista**
 - **PDF** de orçamento via `@react-pdf/renderer`
 - Integração **Google Calendar** via OAuth2 (a conta conectada é a fonte de
   verdade dos eventos — o app só cria/edita/apaga, não faz sync de dois lados)

@@ -20,7 +20,13 @@ type CatalogItemData = {
   defaultUnitPriceCents: number;
 };
 
-export function CatalogItemRowMenu({ item }: { item: CatalogItemData }) {
+export function CatalogItemRowMenu({
+  item,
+  canDelete,
+}: {
+  item: CatalogItemData;
+  canDelete: boolean;
+}) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -38,24 +44,28 @@ export function CatalogItemRowMenu({ item }: { item: CatalogItemData }) {
             <PencilIcon className="size-4" />
             Editar
           </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
-            <Trash2Icon className="size-4" />
-            Excluir
-          </DropdownMenuItem>
+          {canDelete && (
+            <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
+              <Trash2Icon className="size-4" />
+              Excluir
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
       <CatalogItemFormDialog item={item} open={editOpen} onOpenChange={setEditOpen} />
 
-      <ConfirmDeleteButton
-        id={item.id}
-        action={deleteCatalogItem}
-        title="Excluir item do catálogo"
-        description={`Tem certeza que deseja excluir "${item.description}" do catálogo? Orçamentos que já usam essa descrição não são afetados.`}
-        trigger={false}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
+      {canDelete && (
+        <ConfirmDeleteButton
+          id={item.id}
+          action={deleteCatalogItem}
+          title="Excluir item do catálogo"
+          description={`Tem certeza que deseja excluir "${item.description}" do catálogo? Orçamentos que já usam essa descrição não são afetados.`}
+          trigger={false}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
     </>
   );
 }

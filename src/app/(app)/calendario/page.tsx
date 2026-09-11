@@ -48,6 +48,7 @@ export default async function CalendarioPage({
   const user = await requireUser();
   const { google_connected, google_error, month, day } = await searchParams;
   const connected = await isGoogleConnected();
+  const canManage = user.role === "admin" || user.role === "gerente";
 
   const [contactList, budgetList] = await Promise.all([
     db
@@ -112,7 +113,7 @@ export default async function CalendarioPage({
         </Card>
       )}
 
-      {user.role === "admin" &&
+      {canManage &&
         (connected ? (
           <GoogleConnectionCard accountEmail={await getGoogleAccountEmail()} />
         ) : (
@@ -132,13 +133,13 @@ export default async function CalendarioPage({
           </Card>
         ))}
 
-      {!connected && user.role !== "admin" && (
+      {!connected && !canManage && (
         <Card>
           <CardContent className="flex flex-col items-center gap-2 p-8 text-center text-sm text-muted-foreground">
             <CalendarIcon className="size-10" />
             <p>
               O Google Calendar ainda não foi conectado. Peça para um
-              administrador conectar nesta mesma página.
+              administrador ou gerente conectar nesta mesma página.
             </p>
           </CardContent>
         </Card>
@@ -151,6 +152,7 @@ export default async function CalendarioPage({
           selectedDayKey={selectedDayKey}
           contactOptions={contactOptions}
           budgetOptions={budgetOptions}
+          canDelete={canManage}
         />
       )}
     </div>
@@ -163,12 +165,14 @@ async function CalendarBody({
   selectedDayKey,
   contactOptions,
   budgetOptions,
+  canDelete,
 }: {
   grid: ReturnType<typeof buildMonthGrid>;
   todayKey: string;
   selectedDayKey: string;
   contactOptions: { id: string; label: string; address: string | null }[];
   budgetOptions: { id: string; label: string }[];
+  canDelete: boolean;
 }) {
   let eventsByDay = new Map<string, CalendarEventDto[]>();
   let loadError = false;
@@ -227,6 +231,7 @@ async function CalendarBody({
               event={event}
               contacts={contactOptions}
               budgets={budgetOptions}
+              canDelete={canDelete}
             />
           ))
         )}

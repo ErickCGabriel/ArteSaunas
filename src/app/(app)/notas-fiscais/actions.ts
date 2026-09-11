@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import { invoiceFiles, invoices, type Invoice } from "@/db/schema";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireManager, requireUser } from "@/lib/auth/current-user";
 import { parseCurrencyToCents } from "@/lib/currency";
 import { localDateTimeToUTC } from "@/lib/timezone";
 import { putInvoiceFile, removeInvoiceFile } from "@/lib/storage";
@@ -132,7 +132,7 @@ export async function updateInvoiceStatus(
 }
 
 export async function deleteInvoice(id: string): Promise<{ error?: string }> {
-  await requireUser();
+  await requireManager();
   await db.delete(invoices).where(eq(invoices.id, id));
   revalidatePath("/notas-fiscais");
   return {};

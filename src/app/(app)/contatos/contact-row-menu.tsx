@@ -24,7 +24,13 @@ type ContactData = {
   notes: string | null;
 };
 
-export function ContactRowMenu({ contact }: { contact: ContactData }) {
+export function ContactRowMenu({
+  contact,
+  canDelete,
+}: {
+  contact: ContactData;
+  canDelete: boolean;
+}) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -48,13 +54,15 @@ export function ContactRowMenu({ contact }: { contact: ContactData }) {
             <PencilIcon className="size-4" />
             Editar
           </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            onSelect={() => setDeleteOpen(true)}
-          >
-            <Trash2Icon className="size-4" />
-            Excluir
-          </DropdownMenuItem>
+          {canDelete && (
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => setDeleteOpen(true)}
+            >
+              <Trash2Icon className="size-4" />
+              Excluir
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -64,15 +72,17 @@ export function ContactRowMenu({ contact }: { contact: ContactData }) {
         onOpenChange={setEditOpen}
       />
 
-      <ConfirmDeleteButton
-        id={contact.id}
-        action={deleteContact}
-        title="Excluir contato"
-        description={`Tem certeza que deseja excluir "${contact.name}"? Essa ação não pode ser desfeita.`}
-        trigger={false}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
+      {canDelete && (
+        <ConfirmDeleteButton
+          id={contact.id}
+          action={deleteContact}
+          title="Excluir contato"
+          description={`Tem certeza que deseja excluir "${contact.name}"? Essa ação não pode ser desfeita.`}
+          trigger={false}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
     </>
   );
 }

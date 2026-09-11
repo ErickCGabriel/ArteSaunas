@@ -30,7 +30,7 @@ type UserData = {
   name: string;
   username: string;
   email: string;
-  role: "admin" | "operador";
+  role: "admin" | "gerente" | "analista";
 };
 
 export function UserFormDialog({
@@ -48,8 +48,8 @@ export function UserFormDialog({
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = setControlledOpen ?? setUncontrolledOpen;
   const [error, setError] = useState<string>();
-  const [role, setRole] = useState<"admin" | "operador">(
-    user?.role ?? "operador"
+  const [role, setRole] = useState<"admin" | "gerente" | "analista">(
+    user?.role ?? "analista"
   );
   const [isPending, startTransition] = useTransition();
 
@@ -137,7 +137,8 @@ export function UserFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="operador">Operador</SelectItem>
+                <SelectItem value="analista">Analista</SelectItem>
+                <SelectItem value="gerente">Gerente</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
               </SelectContent>
             </Select>

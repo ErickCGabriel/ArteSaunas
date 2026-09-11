@@ -10,7 +10,7 @@ import { users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/current-user";
 import { hashPassword } from "@/lib/auth/password";
 
-const roleSchema = z.enum(["admin", "operador"]);
+const roleSchema = z.enum(["admin", "gerente", "analista"]);
 
 const usernameSchema = z
   .string()

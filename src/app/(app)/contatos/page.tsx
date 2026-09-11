@@ -5,6 +5,7 @@ import { PlusIcon, SearchIcon } from "lucide-react";
 
 import { db } from "@/db";
 import { contacts } from "@/db/schema";
+import { requireUser } from "@/lib/auth/current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +36,9 @@ export default async function ContatosPage({
 }: {
   searchParams: Promise<{ q?: string; sort?: string }>;
 }) {
+  const currentUser = await requireUser();
+  const canDelete = currentUser.role === "admin" || currentUser.role === "gerente";
+
   const { q, sort } = await searchParams;
   const term = q?.trim();
   const sortBy = sort === "name" ? "name" : "updated";
@@ -125,7 +129,7 @@ export default async function ContatosPage({
                       {dateFormatter.format(contact.updatedAt)}
                     </TableCell>
                     <TableCell>
-                      <ContactRowMenu contact={contact} />
+                      <ContactRowMenu contact={contact} canDelete={canDelete} />
                     </TableCell>
                   </TableRow>
                 ))}

@@ -55,3 +55,10 @@ export async function requireAdmin(): Promise<SafeUser> {
   if (user.role !== "admin") redirect("/");
   return user;
 }
+
+/** Admin ou gerente — tudo exceto gerenciar usuários e excluir registros. */
+export async function requireManager(): Promise<SafeUser> {
+  const user = await requireUser();
+  if (user.role !== "admin" && user.role !== "gerente") redirect("/");
+  return user;
+}

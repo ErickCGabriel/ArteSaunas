@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { db } from "@/db";
 import { budgetFiles, budgetItems, budgets, contacts, itemCatalog } from "@/db/schema";
+import { requireUser } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetForm } from "../budget-form";
 import { BudgetHeaderActions } from "./budget-header-actions";
@@ -17,6 +18,8 @@ export default async function OrcamentoDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const currentUser = await requireUser();
+  const canDelete = currentUser.role === "admin" || currentUser.role === "gerente";
 
   const budget = await db
     .select()
@@ -69,6 +72,7 @@ export default async function OrcamentoDetailPage({
           budgetId={budget.id}
           number={budget.number}
           status={budget.status}
+          canDelete={canDelete}
         />
       </div>
 

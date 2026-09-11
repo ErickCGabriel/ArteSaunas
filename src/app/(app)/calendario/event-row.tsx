@@ -52,10 +52,12 @@ export function EventRow({
   event,
   contacts,
   budgets,
+  canDelete,
 }: {
   event: EventData;
   contacts: Option[];
   budgets: Option[];
+  canDelete: boolean;
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -121,13 +123,15 @@ export function EventRow({
             <PencilIcon className="size-4" />
             Editar
           </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            onSelect={() => setDeleteOpen(true)}
-          >
-            <Trash2Icon className="size-4" />
-            Excluir
-          </DropdownMenuItem>
+          {canDelete && (
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => setDeleteOpen(true)}
+            >
+              <Trash2Icon className="size-4" />
+              Excluir
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -139,15 +143,17 @@ export function EventRow({
         onOpenChange={setEditOpen}
       />
 
-      <ConfirmDeleteButton
-        id={event.id}
-        action={deleteEvent}
-        title="Excluir evento"
-        description={`Tem certeza que deseja excluir "${event.title}" do Google Calendar?`}
-        trigger={false}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
+      {canDelete && (
+        <ConfirmDeleteButton
+          id={event.id}
+          action={deleteEvent}
+          title="Excluir evento"
+          description={`Tem certeza que deseja excluir "${event.title}" do Google Calendar?`}
+          trigger={false}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
     </div>
   );
 }

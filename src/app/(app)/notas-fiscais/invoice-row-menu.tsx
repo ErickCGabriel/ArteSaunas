@@ -43,10 +43,12 @@ export function InvoiceRowMenu({
   invoice,
   contacts,
   budgets,
+  canDelete,
 }: {
   invoice: InvoiceData;
   contacts: ContactOption[];
   budgets: BudgetOption[];
+  canDelete: boolean;
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -82,11 +84,15 @@ export function InvoiceRowMenu({
             <PowerIcon className="size-4" />
             {invoice.status === "emitida" ? "Cancelar" : "Reativar"}
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
-            <Trash2Icon className="size-4" />
-            Excluir
-          </DropdownMenuItem>
+          {canDelete && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
+                <Trash2Icon className="size-4" />
+                Excluir
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -98,15 +104,17 @@ export function InvoiceRowMenu({
         onOpenChange={setEditOpen}
       />
 
-      <ConfirmDeleteButton
-        id={invoice.id}
-        action={deleteInvoice}
-        title="Excluir nota fiscal"
-        description={`Tem certeza que deseja excluir o registro da nota fiscal ${invoice.number}? Essa ação não pode ser desfeita.`}
-        trigger={false}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
+      {canDelete && (
+        <ConfirmDeleteButton
+          id={invoice.id}
+          action={deleteInvoice}
+          title="Excluir nota fiscal"
+          description={`Tem certeza que deseja excluir o registro da nota fiscal ${invoice.number}? Essa ação não pode ser desfeita.`}
+          trigger={false}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
     </>
   );
 }

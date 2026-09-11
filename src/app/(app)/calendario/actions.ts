@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
-import { requireAdmin, requireUser } from "@/lib/auth/current-user";
+import { requireManager, requireUser } from "@/lib/auth/current-user";
 import {
   createCalendarEvent,
   deleteCalendarEvent,
@@ -106,7 +106,7 @@ export async function updateEvent(
 export async function deleteEvent(
   eventId: string
 ): Promise<{ error?: string }> {
-  await requireUser();
+  await requireManager();
 
   try {
     await deleteCalendarEvent(eventId);
@@ -119,7 +119,7 @@ export async function deleteEvent(
 }
 
 export async function disconnectGoogleCalendar(): Promise<{ error?: string }> {
-  await requireAdmin();
+  await requireManager();
   await clearGoogleConnection();
   revalidatePath("/calendario");
   return {};

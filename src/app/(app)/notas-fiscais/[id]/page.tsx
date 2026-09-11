@@ -6,6 +6,7 @@ import { FileTextIcon, UserIcon } from "lucide-react";
 
 import { db } from "@/db";
 import { budgetItems, budgets, contacts, invoiceFiles, invoices, users } from "@/db/schema";
+import { requireUser } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge";
 import { formatCentsToBRL } from "@/lib/currency";
@@ -20,6 +21,8 @@ export default async function NotaFiscalDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const currentUser = await requireUser();
+  const canDelete = currentUser.role === "admin" || currentUser.role === "gerente";
 
   const invoice = await db.select().from(invoices).where(eq(invoices.id, id)).then((rows) => rows[0]);
   if (!invoice) notFound();
@@ -88,6 +91,7 @@ export default async function NotaFiscalDetailPage({
           status={invoice.status}
           contacts={contactList}
           budgets={budgetOptionList}
+          canDelete={canDelete}
         />
       </div>
 

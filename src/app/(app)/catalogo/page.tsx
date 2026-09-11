@@ -4,6 +4,7 @@ import { PlusIcon } from "lucide-react";
 
 import { db } from "@/db";
 import { itemCatalog } from "@/db/schema";
+import { requireUser } from "@/lib/auth/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -21,6 +22,9 @@ import { CatalogItemRowMenu } from "./catalog-item-row-menu";
 export const metadata: Metadata = { title: "Catálogo — Arte Saunas" };
 
 export default async function CatalogoPage() {
+  const currentUser = await requireUser();
+  const canDelete = currentUser.role === "admin" || currentUser.role === "gerente";
+
   const items = await db
     .select()
     .from(itemCatalog)
@@ -69,7 +73,7 @@ export default async function CatalogoPage() {
                       {formatCentsToBRL(item.defaultUnitPriceCents)}
                     </TableCell>
                     <TableCell>
-                      <CatalogItemRowMenu item={item} />
+                      <CatalogItemRowMenu item={item} canDelete={canDelete} />
                     </TableCell>
                   </TableRow>
                 ))}

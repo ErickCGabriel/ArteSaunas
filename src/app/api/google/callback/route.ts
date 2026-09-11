@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const user = await getCurrentUser();
   const url = new URL("/calendario", request.url);
 
-  if (!user || user.role !== "admin") {
+  if (!user || (user.role !== "admin" && user.role !== "gerente")) {
     return NextResponse.redirect(url);
   }
 

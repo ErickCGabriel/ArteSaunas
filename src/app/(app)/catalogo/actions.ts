@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import { itemCatalog } from "@/db/schema";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireManager, requireUser } from "@/lib/auth/current-user";
 import { parseCurrencyToCents } from "@/lib/currency";
 
 const catalogItemSchema = z.object({
@@ -74,7 +74,7 @@ export async function updateCatalogItem(
 }
 
 export async function deleteCatalogItem(id: string): Promise<{ error?: string }> {
-  await requireUser();
+  await requireManager();
   await db.delete(itemCatalog).where(eq(itemCatalog.id, id));
   revalidatePath("/catalogo");
   return {};

@@ -24,9 +24,13 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role", { enum: ["admin", "operador"] })
+  // admin: acesso total + gerencia usuários. gerente: acesso total, exceto
+  // gerenciar usuários. analista: cria/edita orçamentos, notas fiscais,
+  // contatos, catálogo e calendário, mas não exclui nada nem mexe na
+  // integração do Google Calendar.
+  role: text("role", { enum: ["admin", "gerente", "analista"] })
     .notNull()
-    .default("operador"),
+    .default("analista"),
   active: boolean("active").notNull().default(true),
   // Bumping this invalidates every existing session cookie for the user.
   tokenVersion: integer("token_version").notNull().default(0),

@@ -5,6 +5,7 @@ import { PlusIcon } from "lucide-react";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/current-user";
+import { ROLE_LABELS } from "@/lib/auth/roles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -84,8 +85,16 @@ export default async function AdminPage() {
                   <TableCell className="text-muted-foreground">{user.username}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                      {user.role === "admin" ? "Administrador" : "Operador"}
+                    <Badge
+                      variant={
+                        user.role === "admin"
+                          ? "default"
+                          : user.role === "gerente"
+                            ? "warning"
+                            : "secondary"
+                      }
+                    >
+                      {ROLE_LABELS[user.role]}
                     </Badge>
                   </TableCell>
                   <TableCell>

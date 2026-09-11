@@ -2,13 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { requireUser } from "@/lib/auth/current-user";
+import { ROLE_LABELS } from "@/lib/auth/roles";
 import { AppNav } from "@/components/app-nav";
 import { UserMenu } from "@/components/user-menu";
-
-const ROLE_LABELS = {
-  admin: "Administrador",
-  operador: "Operador",
-} as const;
 
 export default async function AppLayout({
   children,

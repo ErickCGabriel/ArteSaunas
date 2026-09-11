@@ -28,7 +28,7 @@ type UserData = {
   name: string;
   username: string;
   email: string;
-  role: "admin" | "operador";
+  role: "admin" | "gerente" | "analista";
   active: boolean;
 };
 

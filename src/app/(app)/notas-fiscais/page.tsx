@@ -5,6 +5,7 @@ import { PlusIcon } from "lucide-react";
 
 import { db } from "@/db";
 import { budgetItems, budgets, contacts, invoices, users } from "@/db/schema";
+import { requireUser } from "@/lib/auth/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -28,6 +29,8 @@ export default async function NotasFiscaisPage({
   searchParams: Promise<{ novo?: string }>;
 }) {
   const { novo } = await searchParams;
+  const currentUser = await requireUser();
+  const canDelete = currentUser.role === "admin" || currentUser.role === "gerente";
 
   const [rows, contactList, budgetOptions] = await Promise.all([
     db
@@ -155,7 +158,12 @@ export default async function NotasFiscaisPage({
                       {row.createdByName ?? "—"}
                     </TableCell>
                     <TableCell>
-                      <InvoiceRowMenu invoice={row} contacts={contactList} budgets={budgetOptionList} />
+                      <InvoiceRowMenu
+                        invoice={row}
+                        contacts={contactList}
+                        budgets={budgetOptionList}
+                        canDelete={canDelete}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

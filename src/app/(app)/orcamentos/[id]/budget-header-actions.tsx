@@ -14,10 +14,12 @@ export function BudgetHeaderActions({
   budgetId,
   number,
   status,
+  canDelete,
 }: {
   budgetId: string;
   number: string;
   status: Budget["status"];
+  canDelete: boolean;
 }) {
   const router = useRouter();
 
@@ -36,19 +38,21 @@ export function BudgetHeaderActions({
           Gerar Nota Fiscal
         </Link>
       </Button>
-      <ConfirmDeleteButton
-        id={budgetId}
-        action={deleteBudget}
-        title="Excluir orçamento"
-        description={`Tem certeza que deseja excluir o orçamento ${number}? Essa ação não pode ser desfeita.`}
-        onSuccess={() => router.push("/orcamentos")}
-        trigger={
-          <Button variant="outline">
-            <Trash2Icon className="size-4" />
-            Excluir
-          </Button>
-        }
-      />
+      {canDelete && (
+        <ConfirmDeleteButton
+          id={budgetId}
+          action={deleteBudget}
+          title="Excluir orçamento"
+          description={`Tem certeza que deseja excluir o orçamento ${number}? Essa ação não pode ser desfeita.`}
+          onSuccess={() => router.push("/orcamentos")}
+          trigger={
+            <Button variant="outline">
+              <Trash2Icon className="size-4" />
+              Excluir
+            </Button>
+          }
+        />
+      )}
     </div>
   );
 }
