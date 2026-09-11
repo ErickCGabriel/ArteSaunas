@@ -4,6 +4,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth/current-user";
 import { ROLE_LABELS } from "@/lib/auth/roles";
 import { AppNav } from "@/components/app-nav";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { UserMenu } from "@/components/user-menu";
 
 export default async function AppLayout({
@@ -34,9 +35,11 @@ export default async function AppLayout({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-6">
         {children}
       </main>
+
+      <MobileBottomNav isAdmin={user.role === "admin"} />
     </div>
   );
 }
