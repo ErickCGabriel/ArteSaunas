@@ -60,7 +60,7 @@ export default async function AdminPage() {
         {rows.map((user) => (
           <div
             key={user.id}
-            className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm"
+            className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4 shadow-warm"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-col">

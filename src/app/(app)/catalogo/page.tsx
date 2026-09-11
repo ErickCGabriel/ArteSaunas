@@ -62,7 +62,7 @@ export default async function CatalogoPage() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-sm"
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 shadow-warm"
               >
                 <span className="font-medium">{item.description}</span>
                 <div className="flex items-center gap-1">

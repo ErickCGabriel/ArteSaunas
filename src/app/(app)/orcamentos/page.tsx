@@ -85,7 +85,7 @@ export default async function OrcamentosPage({
               <Link
                 key={row.id}
                 href={`/orcamentos/${row.id}`}
-                className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:bg-accent/40"
+                className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4 shadow-warm transition-colors hover:bg-accent/40"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col">
