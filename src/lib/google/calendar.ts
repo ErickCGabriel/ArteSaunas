@@ -72,6 +72,7 @@ export type CalendarEventInput = {
   endAt: Date;
   contactId?: string;
   budgetId?: string;
+  assignedToId?: string;
 };
 
 export type CalendarEventDto = {
@@ -83,6 +84,7 @@ export type CalendarEventDto = {
   endAt: Date;
   contactId: string | null;
   budgetId: string | null;
+  assignedToId: string | null;
 };
 
 function toDto(event: calendar_v3.Schema$Event): CalendarEventDto {
@@ -99,6 +101,7 @@ function toDto(event: calendar_v3.Schema$Event): CalendarEventDto {
     endAt: endAt ? new Date(endAt) : new Date(),
     contactId: props.contactId ?? null,
     budgetId: props.budgetId ?? null,
+    assignedToId: props.assignedToId ?? null,
   };
 }
 
@@ -116,6 +119,7 @@ function toRequestBody(
         appSource: APP_SOURCE,
         ...(input.contactId ? { contactId: input.contactId } : {}),
         ...(input.budgetId ? { budgetId: input.budgetId } : {}),
+        ...(input.assignedToId ? { assignedToId: input.assignedToId } : {}),
       },
     },
   };

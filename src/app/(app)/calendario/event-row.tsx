@@ -22,6 +22,8 @@ import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { EventFormDialog } from "./event-form-dialog";
 import { deleteEvent } from "./actions";
 import { APP_TIME_ZONE } from "@/lib/timezone";
+import { userColor } from "@/lib/user-colors";
+import { cn } from "@/lib/utils";
 
 type Option = { id: string; label: string; address?: string | null };
 
@@ -34,6 +36,7 @@ type EventData = {
   endAt: Date;
   contactId: string | null;
   budgetId: string | null;
+  assignedToId: string | null;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -52,11 +55,15 @@ export function EventRow({
   event,
   contacts,
   budgets,
+  users,
+  currentUserId,
   canDelete,
 }: {
   event: EventData;
   contacts: Option[];
   budgets: Option[];
+  users: Option[];
+  currentUserId: string;
   canDelete: boolean;
 }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -64,6 +71,7 @@ export function EventRow({
 
   const contact = contacts.find((c) => c.id === event.contactId);
   const budget = budgets.find((b) => b.id === event.budgetId);
+  const assignedTo = users.find((u) => u.id === event.assignedToId);
 
   return (
     <div className="flex items-start gap-4 rounded-lg border border-border p-4">
@@ -77,7 +85,19 @@ export function EventRow({
       </div>
 
       <div className="flex flex-1 flex-col gap-1">
-        <p className="font-medium">{event.title}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-medium">{event.title}</p>
+          {assignedTo && (
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-xs font-medium",
+                userColor(assignedTo.id).badge
+              )}
+            >
+              {assignedTo.label}
+            </span>
+          )}
+        </div>
         {event.description && (
           <p className="text-sm text-muted-foreground">{event.description}</p>
         )}
@@ -139,6 +159,8 @@ export function EventRow({
         event={event}
         contacts={contacts}
         budgets={budgets}
+        users={users}
+        currentUserId={currentUserId}
         open={editOpen}
         onOpenChange={setEditOpen}
       />

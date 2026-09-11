@@ -22,6 +22,7 @@ const eventSchema = z
     endTime: z.string().min(1, "Informe o horário de término."),
     contactId: z.string().optional(),
     budgetId: z.string().optional(),
+    assignedToId: z.string().optional(),
   })
   .transform((data, ctx) => {
     const startAt = localDateTimeToUTC(data.date, data.startTime);
@@ -44,6 +45,7 @@ const eventSchema = z
       endAt,
       contactId: data.contactId || undefined,
       budgetId: data.budgetId || undefined,
+      assignedToId: data.assignedToId || undefined,
     };
   });
 
@@ -59,6 +61,7 @@ function parseEventForm(formData: FormData) {
     endTime: formData.get("endTime"),
     contactId: formData.get("contactId") || undefined,
     budgetId: formData.get("budgetId") || undefined,
+    assignedToId: formData.get("assignedToId") || undefined,
   });
 }
 
@@ -66,14 +69,17 @@ export async function createEvent(
   _prevState: EventFormState,
   formData: FormData
 ): Promise<EventFormState> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = parseEventForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
   try {
-    await createCalendarEvent(parsed.data);
+    await createCalendarEvent({
+      ...parsed.data,
+      assignedToId: parsed.data.assignedToId ?? user.id,
+    });
   } catch (error) {
     return { error: (error as Error).message };
   }
@@ -87,14 +93,17 @@ export async function updateEvent(
   _prevState: EventFormState,
   formData: FormData
 ): Promise<EventFormState> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = parseEventForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
   try {
-    await updateCalendarEvent(eventId, parsed.data);
+    await updateCalendarEvent(eventId, {
+      ...parsed.data,
+      assignedToId: parsed.data.assignedToId ?? user.id,
+    });
   } catch (error) {
     return { error: (error as Error).message };
   }

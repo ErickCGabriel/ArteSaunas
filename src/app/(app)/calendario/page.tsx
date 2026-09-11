@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { CalendarIcon, PlusIcon } from "lucide-react";
 
 import { db } from "@/db";
-import { budgets, contacts } from "@/db/schema";
+import { budgets, contacts, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
 import { listCalendarEventsInRange, type CalendarEventDto } from "@/lib/google/calendar";
 import { getGoogleAccountEmail, isGoogleConnected } from "@/lib/google/settings";
@@ -14,6 +14,8 @@ import { EventFormDialog } from "./event-form-dialog";
 import { EventRow } from "./event-row";
 import { GoogleConnectionCard } from "./google-connection-card";
 import { CalendarGrid } from "./calendar-grid";
+import { CalendarViewToggle } from "./calendar-view-toggle";
+import { TeamStatusCard } from "./team-status-card";
 import { buildMonthGrid, parseMonthParam } from "./date-grid";
 
 export const metadata: Metadata = { title: "Calendário — Arte Saunas" };
@@ -43,19 +45,26 @@ export default async function CalendarioPage({
     google_error?: string;
     month?: string;
     day?: string;
+    view?: string;
   }>;
 }) {
   const user = await requireUser();
-  const { google_connected, google_error, month, day } = await searchParams;
+  const { google_connected, google_error, month, day, view: viewParam } = await searchParams;
   const connected = await isGoogleConnected();
   const canManage = user.role === "admin" || user.role === "gerente";
+  const view: "individual" | "equipe" = viewParam === "individual" ? "individual" : "equipe";
 
-  const [contactList, budgetList] = await Promise.all([
+  const [contactList, budgetList, userList] = await Promise.all([
     db
       .select({ id: contacts.id, name: contacts.name, address: contacts.address })
       .from(contacts)
       .orderBy(asc(contacts.name)),
     db.select({ id: budgets.id, number: budgets.number, title: budgets.title }).from(budgets).orderBy(asc(budgets.number)),
+    db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(eq(users.active, true))
+      .orderBy(asc(users.name)),
   ]);
 
   const contactOptions = contactList.map((c) => ({ id: c.id, label: c.name, address: c.address }));
@@ -63,6 +72,7 @@ export default async function CalendarioPage({
     id: b.id,
     label: `${b.number} — ${b.title}`,
   }));
+  const userOptions = userList.map((u) => ({ id: u.id, label: u.name }));
 
   const todayKey = toLocalDateKey(new Date());
   const { year, monthIndex } = parseMonthParam(month, todayKey);
@@ -84,17 +94,22 @@ export default async function CalendarioPage({
           </p>
         </div>
         {connected && (
-          <EventFormDialog
-            contacts={contactOptions}
-            budgets={budgetOptions}
-            defaultDate={selectedDayKey}
-            trigger={
-              <Button>
-                <PlusIcon className="size-4" />
-                Novo evento
-              </Button>
-            }
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <CalendarViewToggle view={view} monthKey={grid.monthKey} dayKey={selectedDayKey} />
+            <EventFormDialog
+              contacts={contactOptions}
+              budgets={budgetOptions}
+              users={userOptions}
+              currentUserId={user.id}
+              defaultDate={selectedDayKey}
+              trigger={
+                <Button>
+                  <PlusIcon className="size-4" />
+                  Novo evento
+                </Button>
+              }
+            />
+          </div>
         )}
       </div>
 
@@ -152,6 +167,9 @@ export default async function CalendarioPage({
           selectedDayKey={selectedDayKey}
           contactOptions={contactOptions}
           budgetOptions={budgetOptions}
+          userOptions={userOptions}
+          currentUserId={user.id}
+          view={view}
           canDelete={canManage}
         />
       )}
@@ -165,6 +183,9 @@ async function CalendarBody({
   selectedDayKey,
   contactOptions,
   budgetOptions,
+  userOptions,
+  currentUserId,
+  view,
   canDelete,
 }: {
   grid: ReturnType<typeof buildMonthGrid>;
@@ -172,14 +193,16 @@ async function CalendarBody({
   selectedDayKey: string;
   contactOptions: { id: string; label: string; address: string | null }[];
   budgetOptions: { id: string; label: string }[];
+  userOptions: { id: string; label: string }[];
+  currentUserId: string;
+  view: "individual" | "equipe";
   canDelete: boolean;
 }) {
-  let eventsByDay = new Map<string, CalendarEventDto[]>();
+  let allEvents: CalendarEventDto[] = [];
   let loadError = false;
 
   try {
-    const events = await listCalendarEventsInRange(grid.rangeStart, grid.rangeEnd);
-    eventsByDay = groupEventsByDay(events ?? []);
+    allEvents = (await listCalendarEventsInRange(grid.rangeStart, grid.rangeEnd)) ?? [];
   } catch (error) {
     console.error("Falha ao buscar eventos do Google Calendar:", error);
     loadError = true;
@@ -197,6 +220,12 @@ async function CalendarBody({
     );
   }
 
+  const visibleEvents =
+    view === "individual"
+      ? allEvents.filter((e) => !e.assignedToId || e.assignedToId === currentUserId)
+      : allEvents;
+
+  const eventsByDay = groupEventsByDay(visibleEvents);
   const eventCountByDay = new Map(
     [...eventsByDay.entries()].map(([key, events]) => [key, events.length])
   );
@@ -209,19 +238,31 @@ async function CalendarBody({
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
-      <CalendarGrid
-        grid={grid}
-        todayKey={todayKey}
-        selectedDayKey={selectedDayKey}
-        eventCountByDay={eventCountByDay}
-      />
+      <div className="flex flex-col gap-6">
+        <CalendarGrid
+          grid={grid}
+          todayKey={todayKey}
+          selectedDayKey={selectedDayKey}
+          eventCountByDay={eventCountByDay}
+          view={view}
+        />
+        {view === "equipe" && userOptions.length > 0 && (
+          <TeamStatusCard
+            users={userOptions}
+            events={selectedDayEvents}
+            dayLabel={selectedDayLabel}
+          />
+        )}
+      </div>
 
       <div className="flex flex-col gap-3">
         <p className="font-medium capitalize">{selectedDayLabel}</p>
         {selectedDayEvents.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-sm text-muted-foreground">
-              Nenhum evento agendado para este dia.
+              {view === "individual"
+                ? "Nenhum evento seu agendado para este dia."
+                : "Nenhum evento agendado para este dia."}
             </CardContent>
           </Card>
         ) : (
@@ -231,6 +272,8 @@ async function CalendarBody({
               event={event}
               contacts={contactOptions}
               budgets={budgetOptions}
+              users={userOptions}
+              currentUserId={currentUserId}
               canDelete={canDelete}
             />
           ))

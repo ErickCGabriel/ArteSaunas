@@ -11,11 +11,13 @@ export function CalendarGrid({
   todayKey,
   selectedDayKey,
   eventCountByDay,
+  view,
 }: {
   grid: MonthGrid;
   todayKey: string;
   selectedDayKey: string;
   eventCountByDay: Map<string, number>;
+  view: "individual" | "equipe";
 }) {
   return (
     <Card>
@@ -26,18 +28,18 @@ export function CalendarGrid({
           </p>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" asChild>
-              <Link href={`/calendario?month=${grid.prevMonthKey}`}>
+              <Link href={`/calendario?month=${grid.prevMonthKey}&view=${view}`}>
                 <ChevronLeftIcon className="size-4" />
                 <span className="sr-only">Mês anterior</span>
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/calendario?month=${grid.monthKey}&day=${todayKey}`}>
+              <Link href={`/calendario?month=${grid.monthKey}&day=${todayKey}&view=${view}`}>
                 Hoje
               </Link>
             </Button>
             <Button variant="outline" size="icon" asChild>
-              <Link href={`/calendario?month=${grid.nextMonthKey}`}>
+              <Link href={`/calendario?month=${grid.nextMonthKey}&view=${view}`}>
                 <ChevronRightIcon className="size-4" />
                 <span className="sr-only">Próximo mês</span>
               </Link>
@@ -64,7 +66,7 @@ export function CalendarGrid({
             return (
               <Link
                 key={dayKey}
-                href={`/calendario?month=${grid.monthKey}&day=${dayKey}`}
+                href={`/calendario?month=${grid.monthKey}&day=${dayKey}&view=${view}`}
                 className={cn(
                   "flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md text-sm transition-colors",
                   inMonth ? "text-foreground" : "text-muted-foreground/40",

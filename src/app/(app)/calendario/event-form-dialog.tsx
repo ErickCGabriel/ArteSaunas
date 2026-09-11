@@ -38,12 +38,15 @@ type EventData = {
   endAt: Date;
   contactId: string | null;
   budgetId: string | null;
+  assignedToId: string | null;
 };
 
 export function EventFormDialog({
   event,
   contacts,
   budgets,
+  users,
+  currentUserId,
   trigger,
   defaultDate,
   open: controlledOpen,
@@ -52,6 +55,8 @@ export function EventFormDialog({
   event?: EventData;
   contacts: Option[];
   budgets: Option[];
+  users: Option[];
+  currentUserId: string;
   trigger?: ReactNode;
   /** Data ("YYYY-MM-DD") pré-selecionada ao criar um evento a partir de um dia do calendário. */
   defaultDate?: string;
@@ -64,6 +69,9 @@ export function EventFormDialog({
   const [error, setError] = useState<string>();
   const [contactId, setContactId] = useState(event?.contactId ?? "");
   const [budgetId, setBudgetId] = useState(event?.budgetId ?? "");
+  const [assignedToId, setAssignedToId] = useState(
+    event?.assignedToId ?? currentUserId
+  );
   const [address, setAddress] = useState(event?.address ?? "");
   const [isPending, startTransition] = useTransition();
 
@@ -112,6 +120,23 @@ export function EventFormDialog({
         <form action={handleSubmit} className="flex flex-col gap-4">
           <input type="hidden" name="contactId" value={contactId} />
           <input type="hidden" name="budgetId" value={budgetId} />
+          <input type="hidden" name="assignedToId" value={assignedToId} />
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="assignedToId-trigger">Responsável</Label>
+            <Select value={assignedToId} onValueChange={setAssignedToId}>
+              <SelectTrigger id="assignedToId-trigger">
+                <SelectValue placeholder="Selecione um responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="title">Título *</Label>
