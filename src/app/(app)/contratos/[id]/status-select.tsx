@@ -41,7 +41,7 @@ export function StatusSelect({
 
   return (
     <Select value={status} onValueChange={handleChange} disabled={isPending}>
-      <SelectTrigger className="w-40">
+      <SelectTrigger className="w-full sm:w-40">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

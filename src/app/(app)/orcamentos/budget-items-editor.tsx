@@ -31,6 +31,65 @@ export type CatalogOption = {
 
 const emptyItem: BudgetItemInput = { description: "", quantity: "1", unitPrice: "" };
 
+function DescriptionField({
+  id,
+  value,
+  suggestions,
+  onChange,
+  onFocus,
+  onClose,
+  onSelectSuggestion,
+}: {
+  id: string;
+  value: string;
+  suggestions: CatalogOption[];
+  onChange: (value: string) => void;
+  onFocus: () => void;
+  onClose: () => void;
+  onSelectSuggestion: (option: CatalogOption) => void;
+}) {
+  return (
+    <Popover
+      open={suggestions.length > 0}
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <PopoverAnchor asChild>
+        <Input
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={onFocus}
+          autoComplete="off"
+          placeholder="Ex: Instalação de sauna a vapor"
+        />
+      </PopoverAnchor>
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] p-1"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        {suggestions.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onSelectSuggestion(option);
+            }}
+            className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+          >
+            <span className="truncate">{option.description}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {formatCentsToBRL(option.defaultUnitPriceCents)}
+            </span>
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function BudgetItemsEditor({
   name,
   initialItems,
@@ -101,7 +160,79 @@ export function BudgetItemsEditor({
     <div className="flex flex-col gap-3">
       <input type="hidden" name={name} value={serialized} />
 
-      <div className="overflow-hidden rounded-md border border-border">
+      {/* Celular: um cartão por item — a tabela fica apertada demais pra Qtd./Valor. */}
+      <div className="flex flex-col gap-3 sm:hidden">
+        {items.map((item, index) => {
+          const suggestions =
+            suggestionsIndex === index ? suggestionsFor(item.description) : [];
+
+          return (
+            <div
+              key={index}
+              className="flex flex-col gap-2 rounded-lg border border-border p-3"
+            >
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <Label htmlFor={`${formId}-desc-m-${index}`} className="sr-only">
+                    Descrição do item
+                  </Label>
+                  <DescriptionField
+                    id={`${formId}-desc-m-${index}`}
+                    value={item.description}
+                    suggestions={suggestions}
+                    onChange={(value) => {
+                      updateItem(index, { description: value });
+                      setSuggestionsIndex(index);
+                    }}
+                    onFocus={() => setSuggestionsIndex(index)}
+                    onClose={() => setSuggestionsIndex(null)}
+                    onSelectSuggestion={(option) => selectSuggestion(index, option)}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeItem(index)}
+                  disabled={items.length === 1}
+                  className="shrink-0"
+                >
+                  <Trash2Icon className="size-4" />
+                  <span className="sr-only">Remover item</span>
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor={`${formId}-qty-m-${index}`} className="text-xs text-muted-foreground">
+                    Qtd.
+                  </Label>
+                  <Input
+                    id={`${formId}-qty-m-${index}`}
+                    inputMode="decimal"
+                    value={item.quantity}
+                    onChange={(e) => updateItem(index, { quantity: e.target.value })}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor={`${formId}-price-m-${index}`} className="text-xs text-muted-foreground">
+                    Valor unit.
+                  </Label>
+                  <Input
+                    id={`${formId}-price-m-${index}`}
+                    inputMode="decimal"
+                    value={item.unitPrice}
+                    onChange={(e) => updateItem(index, { unitPrice: e.target.value })}
+                    placeholder="0,00"
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Computador: tabela com todas as colunas lado a lado. */}
+      <div className="hidden overflow-hidden rounded-md border border-border sm:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -125,47 +256,18 @@ export function BudgetItemsEditor({
                     >
                       Descrição do item
                     </Label>
-                    <Popover
-                      open={suggestions.length > 0}
-                      onOpenChange={(next) => {
-                        if (!next) setSuggestionsIndex(null);
+                    <DescriptionField
+                      id={`${formId}-desc-${index}`}
+                      value={item.description}
+                      suggestions={suggestions}
+                      onChange={(value) => {
+                        updateItem(index, { description: value });
+                        setSuggestionsIndex(index);
                       }}
-                    >
-                      <PopoverAnchor asChild>
-                        <Input
-                          id={`${formId}-desc-${index}`}
-                          value={item.description}
-                          onChange={(e) => {
-                            updateItem(index, { description: e.target.value });
-                            setSuggestionsIndex(index);
-                          }}
-                          onFocus={() => setSuggestionsIndex(index)}
-                          autoComplete="off"
-                          placeholder="Ex: Instalação de sauna a vapor"
-                        />
-                      </PopoverAnchor>
-                      <PopoverContent
-                        className="w-[--radix-popover-trigger-width] p-1"
-                        onOpenAutoFocus={(e) => e.preventDefault()}
-                      >
-                        {suggestions.map((option) => (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              selectSuggestion(index, option);
-                            }}
-                            className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-                          >
-                            <span className="truncate">{option.description}</span>
-                            <span className="shrink-0 text-xs text-muted-foreground">
-                              {formatCentsToBRL(option.defaultUnitPriceCents)}
-                            </span>
-                          </button>
-                        ))}
-                      </PopoverContent>
-                    </Popover>
+                      onFocus={() => setSuggestionsIndex(index)}
+                      onClose={() => setSuggestionsIndex(null)}
+                      onSelectSuggestion={(option) => selectSuggestion(index, option)}
+                    />
                   </TableCell>
                   <TableCell>
                     <Input

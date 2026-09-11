@@ -43,43 +43,45 @@ export function BudgetHeaderActions({
     : undefined;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
       <StatusSelect budgetId={budgetId} status={status} />
-      <Button variant="outline" asChild>
-        <a href={`/api/orcamentos/${budgetId}/pdf`} download>
-          <DownloadIcon className="size-4" />
-          Baixar PDF
-        </a>
-      </Button>
-      {whatsappHref ? (
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <Button variant="outline" asChild>
-          <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
-            <MessageCircleIcon className="size-4" />
-            Enviar por WhatsApp
+          <a href={`/api/orcamentos/${budgetId}/pdf`} download>
+            <DownloadIcon className="size-4" />
+            Baixar PDF
           </a>
         </Button>
-      ) : (
-        <Button
-          variant="outline"
-          disabled
-          title="Nenhum telefone cadastrado para o cliente/solicitante"
-        >
-          <MessageCircleIcon className="size-4" />
-          Enviar por WhatsApp
+        {whatsappHref ? (
+          <Button variant="outline" asChild>
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+              <MessageCircleIcon className="size-4" />
+              Enviar por WhatsApp
+            </a>
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            disabled
+            title="Nenhum telefone cadastrado para o cliente/solicitante"
+          >
+            <MessageCircleIcon className="size-4" />
+            Enviar por WhatsApp
+          </Button>
+        )}
+        <Button variant="outline" asChild>
+          <Link href={`/contratos?novo=${budgetId}`}>
+            <FileSignatureIcon className="size-4" />
+            Gerar Contrato
+          </Link>
         </Button>
-      )}
-      <Button variant="outline" asChild>
-        <Link href={`/contratos?novo=${budgetId}`}>
-          <FileSignatureIcon className="size-4" />
-          Gerar Contrato
-        </Link>
-      </Button>
-      <Button variant="outline" asChild>
-        <Link href={`/notas-fiscais?novo=${budgetId}`}>
-          <ReceiptIcon className="size-4" />
-          Gerar Nota Fiscal
-        </Link>
-      </Button>
+        <Button variant="outline" asChild>
+          <Link href={`/notas-fiscais?novo=${budgetId}`}>
+            <ReceiptIcon className="size-4" />
+            Gerar Nota Fiscal
+          </Link>
+        </Button>
+      </div>
       {canDelete && (
         <ConfirmDeleteButton
           id={budgetId}
@@ -88,7 +90,7 @@ export function BudgetHeaderActions({
           description={`Tem certeza que deseja excluir o orçamento ${number}? Essa ação não pode ser desfeita.`}
           onSuccess={() => router.push("/orcamentos")}
           trigger={
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Trash2Icon className="size-4" />
               Excluir
             </Button>
