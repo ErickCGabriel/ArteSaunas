@@ -58,7 +58,50 @@ export default async function AdminPage() {
         />
       </div>
 
-      <Card>
+      {/* Celular: lista de cartões — a tabela fica larga demais numa tela estreita. */}
+      <div className="flex flex-col gap-3 sm:hidden">
+        {rows.map((user) => (
+          <div
+            key={user.id}
+            className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col">
+                <span className="font-medium">
+                  {user.name}
+                  {user.id === currentUser.id && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      (você)
+                    </span>
+                  )}
+                </span>
+                <span className="text-sm text-muted-foreground">{user.username}</span>
+              </div>
+              <UserRowMenu user={user} isSelf={user.id === currentUser.id} />
+            </div>
+            <span className="text-sm text-muted-foreground">{user.email}</span>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={
+                  user.role === "admin"
+                    ? "default"
+                    : user.role === "gerente"
+                      ? "warning"
+                      : "secondary"
+                }
+              >
+                {ROLE_LABELS[user.role]}
+              </Badge>
+              <Badge variant={user.active ? "success" : "outline"}>
+                {user.active ? "Ativo" : "Inativo"}
+              </Badge>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Computador: tabela com todas as colunas lado a lado. */}
+      <Card className="hidden sm:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
