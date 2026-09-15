@@ -43,9 +43,7 @@ const budgetSchema = z.object({
   technicalSpecs: z.string().trim().optional(),
   notes: z.string().trim().optional(),
   assignedToId: z.string().trim().optional(),
-  items: z
-    .array(itemSchema)
-    .min(1, "Adicione pelo menos um item ao orçamento."),
+  items: z.array(itemSchema),
 });
 
 function parseBudgetForm(formData: FormData) {

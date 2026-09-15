@@ -335,7 +335,7 @@ export function BudgetForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>Itens do orçamento *</Label>
+        <Label>Itens do orçamento</Label>
         <BudgetItemsEditor
           name="items"
           initialItems={initialItems}

@@ -99,6 +99,9 @@ export function BudgetItemsEditor({
   initialItems?: BudgetItemInput[];
   catalogItems?: CatalogOption[];
 }) {
+  const [noItems, setNoItems] = useState(
+    initialItems !== undefined && initialItems.length === 0
+  );
   const [items, setItems] = useState<BudgetItemInput[]>(
     initialItems && initialItems.length > 0 ? initialItems : [emptyItem]
   );
@@ -108,21 +111,25 @@ export function BudgetItemsEditor({
   const serialized = useMemo(
     () =>
       JSON.stringify(
-        items
-          .filter((item) => item.description.trim())
-          .map((item) => ({
-            description: item.description.trim(),
-            quantity: Number.parseFloat(item.quantity.replace(",", ".")) || 1,
-            unitPriceCents: parseCurrencyToCents(item.unitPrice),
-          }))
+        noItems
+          ? []
+          : items
+              .filter((item) => item.description.trim())
+              .map((item) => ({
+                description: item.description.trim(),
+                quantity: Number.parseFloat(item.quantity.replace(",", ".")) || 1,
+                unitPriceCents: parseCurrencyToCents(item.unitPrice),
+              }))
       ),
-    [items]
+    [items, noItems]
   );
 
-  const total = items.reduce((sum, item) => {
-    const qty = Number.parseFloat(item.quantity.replace(",", ".")) || 0;
-    return sum + qty * parseCurrencyToCents(item.unitPrice);
-  }, 0);
+  const total = noItems
+    ? 0
+    : items.reduce((sum, item) => {
+        const qty = Number.parseFloat(item.quantity.replace(",", ".")) || 0;
+        return sum + qty * parseCurrencyToCents(item.unitPrice);
+      }, 0);
 
   function updateItem(index: number, patch: Partial<BudgetItemInput>) {
     setItems((prev) =>
@@ -160,6 +167,24 @@ export function BudgetItemsEditor({
     <div className="flex flex-col gap-3">
       <input type="hidden" name={name} value={serialized} />
 
+      {noItems ? (
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border p-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Sem itens especificados — o orçamento vai só com a descrição e as
+            especificações acima. Isso é só pra controle interno, não aparece
+            no PDF enviado ao cliente.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setNoItems(false)}
+          >
+            Adicionar itens
+          </Button>
+        </div>
+      ) : (
+        <>
       {/* Celular: um cartão por item — a tabela fica apertada demais pra Qtd./Valor. */}
       <div className="flex flex-col gap-3 sm:hidden">
         {items.map((item, index) => {
@@ -307,15 +332,27 @@ export function BudgetItemsEditor({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <Button type="button" variant="outline" size="sm" onClick={addItem}>
-          <PlusIcon className="size-4" />
-          Adicionar item
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={addItem}>
+            <PlusIcon className="size-4" />
+            Adicionar item
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setNoItems(true)}
+          >
+            Sem itens especificados
+          </Button>
+        </div>
         <p className="text-sm font-medium">
           Total: <span className="text-primary">{formatCentsToBRL(total)}</span>
         </p>
       </div>
+        </>
+      )}
     </div>
   );
 }

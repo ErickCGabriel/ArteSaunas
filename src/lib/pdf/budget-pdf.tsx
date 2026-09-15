@@ -264,31 +264,35 @@ export function BudgetPdf({
             </View>
           )}
 
-          <View style={styles.table}>
-            <View style={styles.tableHeader}>
-              <Text style={styles.colDescription}>Descrição</Text>
-              <Text style={styles.colQty}>Qtd.</Text>
-              <Text style={styles.colUnitPrice}>Valor unit.</Text>
-              <Text style={styles.colSubtotal}>Subtotal</Text>
-            </View>
-            {items.map((item) => (
-              <View key={item.id} style={styles.tableRow}>
-                <Text style={styles.colDescription}>{item.description}</Text>
-                <Text style={styles.colQty}>{item.quantity}</Text>
-                <Text style={styles.colUnitPrice}>
-                  {formatCentsToBRL(item.unitPriceCents)}
-                </Text>
-                <Text style={styles.colSubtotal}>
-                  {formatCentsToBRL(item.quantity * item.unitPriceCents)}
-                </Text>
+          {items.length > 0 && (
+            <>
+              <View style={styles.table}>
+                <View style={styles.tableHeader}>
+                  <Text style={styles.colDescription}>Descrição</Text>
+                  <Text style={styles.colQty}>Qtd.</Text>
+                  <Text style={styles.colUnitPrice}>Valor unit.</Text>
+                  <Text style={styles.colSubtotal}>Subtotal</Text>
+                </View>
+                {items.map((item) => (
+                  <View key={item.id} style={styles.tableRow}>
+                    <Text style={styles.colDescription}>{item.description}</Text>
+                    <Text style={styles.colQty}>{item.quantity}</Text>
+                    <Text style={styles.colUnitPrice}>
+                      {formatCentsToBRL(item.unitPriceCents)}
+                    </Text>
+                    <Text style={styles.colSubtotal}>
+                      {formatCentsToBRL(item.quantity * item.unitPriceCents)}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
 
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatCentsToBRL(total)}</Text>
-          </View>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalValue}>{formatCentsToBRL(total)}</Text>
+              </View>
+            </>
+          )}
         </View>
 
         {budget.notes && (
