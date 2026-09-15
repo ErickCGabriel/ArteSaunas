@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Página não encontrada — Arte Sau
 
 export default function RootNotFound() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-background px-4">
+    <div className="app-shell flex min-h-screen w-full items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <Image

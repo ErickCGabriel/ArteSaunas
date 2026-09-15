@@ -15,7 +15,7 @@ export default async function AppLayout({
   const user = await requireUser();
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="app-shell flex min-h-screen flex-col">
       <header className="relative border-b border-border bg-card/60 backdrop-blur-sm">
         <div className="ember-rule pointer-events-none absolute inset-x-0 bottom-0 h-px opacity-40" aria-hidden />
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
