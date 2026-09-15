@@ -154,16 +154,18 @@ export async function createBudget(
       createdById: user.id,
     });
 
-    await tx.insert(budgetItems).values(
-      items.map((item, index) => ({
-        id: nanoid(),
-        budgetId: id,
-        description: item.description,
-        quantity: item.quantity,
-        unitPriceCents: item.unitPriceCents,
-        position: index,
-      }))
-    );
+    if (items.length > 0) {
+      await tx.insert(budgetItems).values(
+        items.map((item, index) => ({
+          id: nanoid(),
+          budgetId: id,
+          description: item.description,
+          quantity: item.quantity,
+          unitPriceCents: item.unitPriceCents,
+          position: index,
+        }))
+      );
+    }
   });
 
   revalidatePath("/orcamentos");
@@ -194,16 +196,18 @@ export async function updateBudget(
 
     await tx.delete(budgetItems).where(eq(budgetItems.budgetId, id));
 
-    await tx.insert(budgetItems).values(
-      items.map((item, index) => ({
-        id: nanoid(),
-        budgetId: id,
-        description: item.description,
-        quantity: item.quantity,
-        unitPriceCents: item.unitPriceCents,
-        position: index,
-      }))
-    );
+    if (items.length > 0) {
+      await tx.insert(budgetItems).values(
+        items.map((item, index) => ({
+          id: nanoid(),
+          budgetId: id,
+          description: item.description,
+          quantity: item.quantity,
+          unitPriceCents: item.unitPriceCents,
+          position: index,
+        }))
+      );
+    }
   });
 
   revalidatePath("/orcamentos");
