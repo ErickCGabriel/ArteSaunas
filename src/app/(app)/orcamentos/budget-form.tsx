@@ -52,6 +52,7 @@ type BudgetData = {
   technicalSpecs: string | null;
   notes: string | null;
   assignedToId: string | null;
+  manualTotalCents: number | null;
   items: { description: string; quantity: number; unitPriceCents: number }[];
 };
 
@@ -339,6 +340,7 @@ export function BudgetForm({
         <BudgetItemsEditor
           name="items"
           initialItems={initialItems}
+          initialManualTotalCents={budget?.manualTotalCents}
           catalogItems={catalogItems}
         />
       </div>

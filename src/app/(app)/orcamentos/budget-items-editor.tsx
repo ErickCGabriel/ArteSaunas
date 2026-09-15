@@ -93,10 +93,12 @@ function DescriptionField({
 export function BudgetItemsEditor({
   name,
   initialItems,
+  initialManualTotalCents,
   catalogItems = [],
 }: {
   name: string;
   initialItems?: BudgetItemInput[];
+  initialManualTotalCents?: number | null;
   catalogItems?: CatalogOption[];
 }) {
   const [noItems, setNoItems] = useState(
@@ -104,6 +106,11 @@ export function BudgetItemsEditor({
   );
   const [items, setItems] = useState<BudgetItemInput[]>(
     initialItems && initialItems.length > 0 ? initialItems : [emptyItem]
+  );
+  const [manualTotal, setManualTotal] = useState(
+    initialManualTotalCents
+      ? formatCentsToBRL(initialManualTotalCents).replace(/[^\d,.-]/g, "")
+      : ""
   );
   const [suggestionsIndex, setSuggestionsIndex] = useState<number | null>(null);
   const formId = useId();
@@ -166,22 +173,42 @@ export function BudgetItemsEditor({
   return (
     <div className="flex flex-col gap-3">
       <input type="hidden" name={name} value={serialized} />
+      <input
+        type="hidden"
+        name="manualTotalCents"
+        value={noItems ? String(parseCurrencyToCents(manualTotal)) : ""}
+      />
 
       {noItems ? (
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border p-6 text-center">
+        <div className="flex flex-col gap-3 rounded-lg border border-dashed border-border p-4">
           <p className="text-sm text-muted-foreground">
             Sem itens especificados — o orçamento vai só com a descrição e as
-            especificações acima. Isso é só pra controle interno, não aparece
-            no PDF enviado ao cliente.
+            especificações acima.{" "}
+            <span className="text-xs">
+              (Isso é só pra controle interno, não aparece no PDF enviado ao
+              cliente.)
+            </span>
           </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setNoItems(false)}
-          >
-            Adicionar itens
-          </Button>
+          <div className="flex flex-col gap-1.5 sm:w-56">
+            <Label htmlFor={`${formId}-manual-total`}>Valor do orçamento</Label>
+            <Input
+              id={`${formId}-manual-total`}
+              inputMode="decimal"
+              value={manualTotal}
+              onChange={(e) => setManualTotal(e.target.value)}
+              placeholder="0,00"
+            />
+          </div>
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setNoItems(false)}
+            >
+              Adicionar itens
+            </Button>
+          </div>
         </div>
       ) : (
         <>

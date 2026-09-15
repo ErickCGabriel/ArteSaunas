@@ -28,7 +28,7 @@ export default async function DashboardPage() {
         title: budgets.title,
         status: budgets.status,
         contactName: contacts.name,
-        total: sql<number>`coalesce(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0)`,
+        total: sql<number>`coalesce(nullif(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0), ${budgets.manualTotalCents}, 0)`,
       })
       .from(budgets)
       .leftJoin(contacts, eq(contacts.id, budgets.contactId))

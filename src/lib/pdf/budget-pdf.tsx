@@ -155,10 +155,11 @@ export function BudgetPdf({
   contact: Contact;
   portfolioImages?: Buffer[];
 }) {
-  const total = items.reduce(
+  const itemsTotal = items.reduce(
     (sum, item) => sum + item.quantity * item.unitPriceCents,
     0
   );
+  const total = items.length > 0 ? itemsTotal : budget.manualTotalCents ?? 0;
 
   const roomDimensions = formatRoomDimensions(budget);
   const installAddress = formatInstallAddress(budget);
@@ -265,33 +266,36 @@ export function BudgetPdf({
           )}
 
           {items.length > 0 && (
-            <>
-              <View style={styles.table}>
-                <View style={styles.tableHeader}>
-                  <Text style={styles.colDescription}>Descrição</Text>
-                  <Text style={styles.colQty}>Qtd.</Text>
-                  <Text style={styles.colUnitPrice}>Valor unit.</Text>
-                  <Text style={styles.colSubtotal}>Subtotal</Text>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={styles.colDescription}>Descrição</Text>
+                <Text style={styles.colQty}>Qtd.</Text>
+                <Text style={styles.colUnitPrice}>Valor unit.</Text>
+                <Text style={styles.colSubtotal}>Subtotal</Text>
+              </View>
+              {items.map((item) => (
+                <View key={item.id} style={styles.tableRow}>
+                  <Text style={styles.colDescription}>{item.description}</Text>
+                  <Text style={styles.colQty}>{item.quantity}</Text>
+                  <Text style={styles.colUnitPrice}>
+                    {formatCentsToBRL(item.unitPriceCents)}
+                  </Text>
+                  <Text style={styles.colSubtotal}>
+                    {formatCentsToBRL(item.quantity * item.unitPriceCents)}
+                  </Text>
                 </View>
-                {items.map((item) => (
-                  <View key={item.id} style={styles.tableRow}>
-                    <Text style={styles.colDescription}>{item.description}</Text>
-                    <Text style={styles.colQty}>{item.quantity}</Text>
-                    <Text style={styles.colUnitPrice}>
-                      {formatCentsToBRL(item.unitPriceCents)}
-                    </Text>
-                    <Text style={styles.colSubtotal}>
-                      {formatCentsToBRL(item.quantity * item.unitPriceCents)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+              ))}
+            </View>
+          )}
 
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>{formatCentsToBRL(total)}</Text>
-              </View>
-            </>
+          {/* Sem itens discriminados: mostra só o valor total, nunca a
+              tabela (o "sem itens" é controle interno, não aparece pro
+              cliente). Com itens, o total sempre aparece abaixo da tabela. */}
+          {(items.length > 0 || total > 0) && (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalValue}>{formatCentsToBRL(total)}</Text>
+            </View>
           )}
         </View>
 

@@ -53,7 +53,7 @@ export default async function ContatoDetailPage({
         number: budgets.number,
         title: budgets.title,
         status: budgets.status,
-        total: sql<number>`coalesce(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0)`,
+        total: sql<number>`coalesce(nullif(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0), ${budgets.manualTotalCents}, 0)`,
       })
       .from(budgets)
       .leftJoin(budgetItems, eq(budgetItems.budgetId, budgets.id))

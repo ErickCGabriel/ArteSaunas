@@ -109,6 +109,10 @@ export const budgets = pgTable(
     // de revestimento/isolamento/forno etc. que já usam no orçamento em Word.
     technicalSpecs: text("technical_specs"),
     notes: text("notes"),
+    // Valor do orçamento quando não há itens discriminados (ex: orçamento
+    // que é só uma descrição). Ignorado/zerado quando existem budgetItems —
+    // nesse caso o total vem da soma dos itens.
+    manualTotalCents: integer("manual_total_cents"),
     createdById: text("created_by_id").references(() => users.id, {
       onDelete: "set null",
     }),

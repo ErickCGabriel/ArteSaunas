@@ -1,0 +1,1 @@
+ALTER TABLE "budgets" ADD COLUMN "manual_total_cents" integer;

@@ -44,6 +44,7 @@ const budgetSchema = z.object({
   notes: z.string().trim().optional(),
   assignedToId: z.string().trim().optional(),
   items: z.array(itemSchema),
+  manualTotalCents: z.coerce.number().int().nonnegative().optional(),
 });
 
 function parseBudgetForm(formData: FormData) {
@@ -75,6 +76,7 @@ function parseBudgetForm(formData: FormData) {
     notes: formData.get("notes") || undefined,
     assignedToId: formData.get("assignedToId") || undefined,
     items,
+    manualTotalCents: formData.get("manualTotalCents") || undefined,
   });
 }
 
@@ -99,7 +101,10 @@ async function nextBudgetNumber(): Promise<string> {
   return `${prefix}${String(nextSeq).padStart(4, "0")}`;
 }
 
-function budgetFieldsFromData(data: Omit<z.infer<typeof budgetSchema>, "items">) {
+function budgetFieldsFromData(
+  data: Omit<z.infer<typeof budgetSchema>, "items">,
+  hasItems: boolean
+) {
   return {
     title: data.title,
     contactId: data.contactId,
@@ -120,6 +125,9 @@ function budgetFieldsFromData(data: Omit<z.infer<typeof budgetSchema>, "items">)
     technicalSpecs: data.technicalSpecs || null,
     notes: data.notes || null,
     assignedToId: data.assignedToId || null,
+    // O valor manual só vale quando não há itens discriminados — se
+    // existem itens, o total vem sempre da soma deles.
+    manualTotalCents: hasItems ? null : data.manualTotalCents ?? null,
   };
 }
 
@@ -141,7 +149,7 @@ export async function createBudget(
     await tx.insert(budgets).values({
       id,
       number,
-      ...budgetFieldsFromData(data),
+      ...budgetFieldsFromData(data, items.length > 0),
       assignedToId: data.assignedToId || user.id,
       createdById: user.id,
     });
@@ -179,7 +187,7 @@ export async function updateBudget(
     await tx
       .update(budgets)
       .set({
-        ...budgetFieldsFromData(data),
+        ...budgetFieldsFromData(data, items.length > 0),
         updatedAt: new Date(),
       })
       .where(eq(budgets.id, id));

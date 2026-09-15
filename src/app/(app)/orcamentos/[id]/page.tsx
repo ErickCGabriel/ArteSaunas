@@ -114,6 +114,7 @@ export default async function OrcamentoDetailPage({
               technicalSpecs: budget.technicalSpecs,
               notes: budget.notes,
               assignedToId: budget.assignedToId,
+              manualTotalCents: budget.manualTotalCents,
               items: items.map((item) => ({
                 description: item.description,
                 quantity: item.quantity,

@@ -43,7 +43,7 @@ export default async function OrcamentosPage({
       contactName: contacts.name,
       assignedToId: budgets.assignedToId,
       assignedToName: assignedTo,
-      total: sql<number>`coalesce(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0)`,
+      total: sql<number>`coalesce(nullif(sum(${budgetItems.unitPriceCents} * ${budgetItems.quantity}), 0), ${budgets.manualTotalCents}, 0)`,
     })
     .from(budgets)
     .leftJoin(contacts, eq(contacts.id, budgets.contactId))
